@@ -1,1 +1,0 @@
-php artisan make:migration create_post_table --create=tb_post

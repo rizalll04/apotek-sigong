@@ -18,6 +18,7 @@ return new class extends Migration
             $table->string('name');
             $table->string('username')->unique();
             $table->string('password');
+            $table->enum('role', ['admin', 'manajer','kasir'])->default('kasir'); // Role untuk multi-user
             $table->timestamps();
         });
     }
