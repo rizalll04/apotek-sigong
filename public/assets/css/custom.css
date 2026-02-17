@@ -1,9 +1,16 @@
 /* ============== MODERN DESIGN SYSTEM ============== */
 
+:root {
+    --bs-primary: #12b3b3;
+    --bs-primary-rgb: 18, 179, 179;
+}
+
 /* BACKGROUND & LAYOUT */
 body {
     background-color: #f8f9fa !important;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    font-family:
+        -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue",
+        Arial, sans-serif;
 }
 
 .page-wrapper {
@@ -32,7 +39,7 @@ body {
 /* PAGE HEADERS */
 .page-title {
     font-weight: 700;
-    color: #0d6efd;
+    color: #12b3b3;
     font-size: 1.75rem;
     margin-bottom: 0.5rem;
 }
@@ -75,13 +82,13 @@ body {
 }
 
 .btn-primary {
-    background-color: #0d6efd;
+    background-color: #12b3b3;
 }
 
 .btn-primary:hover {
-    background-color: #0b5ed7;
+    background-color: #0fa6a6;
     transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(13, 110, 253, 0.3);
+    box-shadow: 0 4px 12px rgba(18, 179, 179, 0.3);
 }
 
 .btn-success {
@@ -112,26 +119,39 @@ body {
 }
 
 .btn-outline-primary {
-    color: #0d6efd;
-    border-color: #0d6efd;
+    color: #12b3b3;
+    border-color: #12b3b3;
 }
 
 .btn-outline-primary:hover {
-    background-color: #0d6efd;
-    border-color: #0d6efd;
+    background-color: #12b3b3;
+    border-color: #12b3b3;
 }
 
 /* FORM CONTROLS */
-.form-control, .form-select {
+.form-control,
+.form-select {
     border-radius: 0.5rem;
     border: 1px solid #dee2e6;
     padding: 0.75rem 1rem;
     transition: all 0.2s ease;
 }
 
-.form-control:focus, .form-select:focus {
-    border-color: #0d6efd;
-    box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.15);
+.form-control:focus,
+.form-select:focus {
+    border-color: #12b3b3;
+    box-shadow: 0 0 0 0.2rem rgba(18, 179, 179, 0.15);
+}
+
+/* Utility overrides to match primary brand color */
+.text-primary {
+    color: #12b3b3 !important;
+}
+.bg-primary {
+    background-color: #12b3b3 !important;
+}
+.border-primary {
+    border-color: #12b3b3 !important;
 }
 
 .input-group-text {
@@ -155,7 +175,8 @@ body {
     transition: background-color 0.2s ease;
 }
 
-.table td, .table th {
+.table td,
+.table th {
     border-color: #e9ecef;
     padding: 1rem 0.75rem;
     vertical-align: middle;
@@ -219,7 +240,7 @@ body {
     .page-title {
         font-size: 1.5rem;
     }
-    
+
     .card-body {
         padding: 1rem;
     }

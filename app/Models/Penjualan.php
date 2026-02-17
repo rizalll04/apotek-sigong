@@ -17,6 +17,7 @@ class Penjualan extends Model
 
     // Kolom-kolom yang dapat diisi
     protected $fillable = [
+        'user_id',
         'produk_id',
         'jumlah',
         'harga',
@@ -34,6 +35,11 @@ class Penjualan extends Model
     public function produk()
     {
         return $this->belongsTo(Produk::class, 'produk_id', 'id');
+    }
+
+    public function user()
+    {
+        return $this->belongsTo(User::class, 'user_id', 'id');
     }
 
     /**

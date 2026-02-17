@@ -8,7 +8,7 @@
     <div class="mb-4">
         <div class="d-flex justify-content-between align-items-center">
             <div>
-                <h2 class="mb-1" style="font-weight: 700; color: #0d6efd;">
+                <h2 class="mb-1 page-title" style="font-weight: 700; ">
                     <i class="bi bi-cart3"></i> Penjualan
                 </h2>
                 <p class="text-muted mb-0">Pilih produk untuk ditambahkan ke transaksi</p>
@@ -60,6 +60,8 @@
                                                 </span>
                                             @endif
                                         </div>
+                                        <!-- Spacer to prevent badge overlapping content -->
+                                        <div style="height: 32px;"></div>
                                     </div>
                                     <div class="card-body d-flex flex-column">
                                         <!-- Product Name -->
@@ -199,7 +201,7 @@
                     </div>
 
                     <!-- Payment Method -->
-                    <form method="POST" action="{{ route('penjualan.simpan') }}" id="paymentForm">
+                    <form method="POST" action="{{ route('penjualan.simpan') }}" id="paymentForm" enctype="multipart/form-data">
                         @csrf
                         <input type="hidden" name="total_belanja" id="totalBelanja" value="{{ intval($subtotalAll ?? 0) }}">
 
@@ -237,14 +239,9 @@
                         <!-- Non-Tunai Payment Fields -->
                         <div id="nonTunaiFields" style="display: none;">
                             <div class="mb-3">
-                                <label class="form-label fw-semibold small">Bukti Transfer <span class="text-danger">*</span></label>
-                                <div class="input-group input-group-sm">
-                                    <span class="input-group-text">
-                                        <i class="bi bi-receipt"></i>
-                                    </span>
-                                    <input type="text" name="bukti_transfer" id="buktiTransfer" class="form-control" placeholder="Masukkan nomor referensi / proof of transfer">
-                                </div>
-                                <small class="text-muted d-block mt-1">Contoh: REF123456789 atau nomor invoice bank</small>
+                                <label class="form-label fw-semibold small">Bukti Pembayaran (Foto) <span class="text-danger">*</span></label>
+                                <input type="file" name="bukti_transfer_file" id="buktiTransferFile" class="form-control form-control-sm" accept="image/*">
+                                <small class="text-muted d-block mt-1">Unggah foto bukti pembayaran (JPEG/PNG).</small>
                             </div>
                         </div>
 
@@ -429,7 +426,7 @@ function togglePaymentFields() {
     const metodeSelect = document.getElementById('metode_pembayaran');
     const cashFields = document.getElementById('cashFields');
     const nonTunaiFields = document.getElementById('nonTunaiFields');
-    const buktiTransferInput = document.getElementById('buktiTransfer');
+    const buktiTransferInput = document.getElementById('buktiTransferFile');
     const uangDiterimaInput = document.getElementById('uangDiterima');
     
     if (metodeSelect.value === 'Cash') {

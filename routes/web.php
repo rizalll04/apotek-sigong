@@ -18,33 +18,23 @@ Route::middleware(['auth', 'role:admin,kasir,owner'])->group(function () {
     Route::get('/penjualan', [PenjualanController::class, 'index'])->name('penjualan.index');
 });
 
-// Penjualan Edit & Delete (Admin & Kasir Only)
-Route::middleware(['auth', 'role:admin,kasir'])->group(function () {
+// Penjualan Edit & Delete (Admin Only)
+Route::middleware(['auth', 'role:admin'])->group(function () {
     Route::get('penjualan/{id_penjualan}/edit', [PenjualanController::class, 'edit'])->name('penjualan.edit');
     Route::put('penjualan/{id_penjualan}', [PenjualanController::class, 'update'])->name('penjualan.update');
     Route::delete('penjualan/{id_penjualan}', [PenjualanController::class, 'destroy'])->name('penjualan.destroy');
+});
+
+// Simpan transaksi dari keranjang (Admin & Kasir)
+Route::middleware(['auth', 'role:admin,kasir'])->group(function () {
     Route::post('/penjualan/simpan', [PenjualanController::class, 'simpanDariKeranjang'])->name('penjualan.simpan');
 });
 
-// Penjualan Receipt & Payment (All Authenticated)
+// Penjualan Receipt (All Authenticated)
 Route::middleware(['auth'])->group(function () {
     Route::get('/penjualan/struk', [PenjualanController::class, 'struk'])->name('penjualan.struk');
-    Route::get('/penjualan/pembayaran', [PenjualanController::class, 'halamanPembayaranNonTunai'])->name('penjualan.pembayaran');
 });
-//pembayaran midtrans
-use App\Http\Controllers\MidtransController;
-
-Route::post('/bayar', [App\Http\Controllers\MidtransController::class, 'bayar'])->name('bayar.midtrans');
-
-Route::get('/bayar-midtrans/snap/{token}', [MidtransController::class, 'snap'])->name('bayar.snap');
-Route::post('/midtrans/callback', [MidtransController::class, 'callback']);
-
-
-Route::post('/orders/{id}/pay', [PenjualanController::class, 'processPayment'])->name('orders.processPayment');
-
-// Rute untuk menerima callback dari Midtrans setelah transaksi selesai
-// Rute untuk menerima callback dari Midtrans setelah transaksi selesai
-Route::get('/bayar/success/{order_id}', [MidtransController::class, 'finish'])->name('bayar.finish');
+// Midtrans disabled for admin-only app (routes removed)
 
 
 
@@ -160,9 +150,13 @@ Route::middleware(['auth', 'role:admin,apoteker'])->group(function () {
     Route::post('/produk/deleteAll', [ProdukController::class, 'deleteAll'])->name('produk.deleteAll');
 });
 
+// Import penjualan (Admin & Kasir), DeleteAll (Admin only)
 Route::middleware(['auth', 'role:admin,kasir'])->group(function () {
     Route::get('importpenjualan', [PenjualanController::class, 'showImport'])->name('penjualan.import');
     Route::post('/penjualan/import/process', [PenjualanController::class, 'import'])->name('penjualan.import.process');
+});
+
+Route::middleware(['auth', 'role:admin'])->group(function () {
     Route::post('/penjualan/deleteAll', [PenjualanController::class, 'deleteAll'])->name('penjualan.deleteAll');
 });
 

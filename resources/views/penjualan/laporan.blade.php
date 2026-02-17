@@ -6,7 +6,7 @@
     <div class="mb-4">
         <div class="d-flex justify-content-between align-items-center">
             <div>
-                <h2 class="mb-1" style="font-weight: 700; color: #0d6efd;">
+                <h2 class="mb-1 page-title" style="font-weight: 700; ">
                     <i class="bi bi-file-earmark-text"></i> Laporan Penjualan
                 </h2>
             </div>

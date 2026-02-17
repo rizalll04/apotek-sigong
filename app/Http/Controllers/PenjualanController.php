@@ -106,6 +106,12 @@ class PenjualanController extends Controller
             $penjualanQuery->whereYear('tanggal', $tahun);
         }
         
+        // Filter berdasarkan role: kasir hanya melihat transaksi miliknya
+        $user = auth()->user();
+        if ($user && $user->role === 'kasir') {
+            $penjualanQuery->where('user_id', $user->user_id);
+        }
+
         // Ambil data penjualan yang sudah difilter
         $penjualan = $penjualanQuery->get();
         
@@ -132,8 +138,15 @@ class PenjualanController extends Controller
     {
         $metode = $request->input('metode_pembayaran');
         $uangDiterima = intval($request->input('uang_diterima', 0));
+        $buktiPath = null;
+        if ($metode === 'Non Tunai' && $request->hasFile('bukti_transfer_file')) {
+            $request->validate([
+                'bukti_transfer_file' => 'image|mimes:jpeg,png,jpg|max:5120',
+            ]);
+            $buktiPath = $request->file('bukti_transfer_file')->store('bukti_transfer', 'public');
+        }
         
-        $userId = auth()->id(); // Use authenticated user ID instead of hardcoded 1
+        $userId = auth()->user() ? auth()->user()->user_id : null; // Gunakan primary key tb_user
         $keranjangItems = Keranjang::where('user_id', $userId)->get();
     
         if ($keranjangItems->isEmpty()) {
@@ -155,6 +168,7 @@ class PenjualanController extends Controller
             }
             
             $penjualan = Penjualan::create([
+                'user_id'            => $userId,
                 'produk_id'          => $item->produk_id,
                 'jumlah'             => $item->jumlah,
                 'harga'              => $item->harga_satuan,
@@ -162,8 +176,9 @@ class PenjualanController extends Controller
                 'metode_pembayaran'  => $metode,
                 'uang_diterima'      => $metode === 'Cash' ? $uangDiterima : null,
                 'kembalian'          => $kembalian,
+                'bukti_transfer'     => $metode === 'Non Tunai' ? $buktiPath : null,
                 'tanggal'            => now(),
-                'payment_status'     => $metode === 'Cash' ? 'paid' : 'pending',
+                'payment_status'     => 'paid',
             ]);
     
             $penjualans[] = $penjualan;
@@ -180,18 +195,11 @@ class PenjualanController extends Controller
         // Bersihkan keranjang
         Keranjang::where('user_id', $userId)->delete();
     
-        // Redirect sesuai metode pembayaran
-        if ($metode === 'Non Tunai') {
-            return redirect()->route('penjualan.pembayaran') // ganti route sesuai halaman pembayaran kamu
-                             ->with('penjualans', $penjualans)
-                             ->with('totalTransaksi', $totalTransaksi)
-                             ->with('info', 'Silakan lanjutkan pembayaran Non Tunai.');
-        } else {
-            return redirect()->route('penjualan.struk')
-                             ->with('penjualans', $penjualans)
-                             ->with('totalTransaksi', $totalTransaksi)
-                             ->with('success', 'Transaksi berhasil disimpan.');
-        }
+        // Semua metode (Cash & Non Tunai) langsung dianggap lunas dan menuju struk
+        return redirect()->route('penjualan.struk')
+                         ->with('penjualans', $penjualans)
+                         ->with('totalTransaksi', $totalTransaksi)
+                         ->with('success', 'Transaksi berhasil disimpan.');
     }
 
 

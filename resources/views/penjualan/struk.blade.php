@@ -44,6 +44,23 @@
                         Rp {{ number_format($totalTransaksi, 2) }}</p>
                     </div>
 
+                    <!-- Info Pembayaran (Uang Diterima & Kembalian) -->
+                    @php
+                        $firstSale = is_array($penjualans)
+                            ? (count($penjualans) ? $penjualans[0] : null)
+                            : ($penjualans ? $penjualans->first() : null);
+                        $metode = $firstSale ? $firstSale->metode_pembayaran : null;
+                        $uangDiterima = $firstSale ? $firstSale->uang_diterima : null;
+                        $kembalian = $uangDiterima !== null ? max(0, $uangDiterima - $totalTransaksi) : null;
+                    @endphp
+                    <div style="margin-top: 10px; font-size: 14px;">
+                        <p style="margin: 0;">Metode Pembayaran: <strong>{{ $metode ?? '-' }}</strong></p>
+                        @if($metode === 'Cash')
+                            <p style="margin: 0;">Uang Diterima: <strong>Rp {{ number_format($uangDiterima ?? 0, 2) }}</strong></p>
+                            <p style="margin: 0;">Kembalian: <strong>Rp {{ number_format($kembalian ?? 0, 2) }}</strong></p>
+                        @endif
+                    </div>
+
                     <!-- Pemberitahuan Session -->
                     <div id="session-timer" style="margin-top: 20px; font-size: 16px; text-align: center;">
                         <p id="countdown-message">Session akan kedaluwarsa dalam <span id="countdown">02:00</span> menit.</p>

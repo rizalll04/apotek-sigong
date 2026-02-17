@@ -59,20 +59,24 @@
                 {{-- Dashboard (ADMIN ONLY) --}}
                 @if(Auth::check() && Auth::user()->role == 'admin')
                 <li class="sidebar-item {{ request()->routeIs('admin.index') ? 'selected' : '' }}">
-                    <a class="sidebar-link" href="{{ route('admin.index') }}">
-                        <iconify-icon icon="solar:home-smile-bold-duotone" class="fs-6"></iconify-icon>
-                        <span class="hide-menu">Dashboard</span>
-                    </a>
+                  <a class="sidebar-link" href="{{ route('admin.index') }}">
+                    <iconify-icon icon="solar:home-smile-bold-duotone" class="fs-6"></iconify-icon>
+                    <span class="hide-menu">Dashboard</span>
+                  </a>
                 </li>
                 @endif
 
-                {{-- Profile (ALL USERS) --}}
-                <li class="sidebar-item {{ request()->routeIs('pengguna.index') ? 'selected' : '' }}">
-                    <a class="sidebar-link" href="{{ route('pengguna.index') }}">
-                        <iconify-icon icon="solar:user-bold-duotone" class="fs-6"></iconify-icon>
-                        <span class="hide-menu">Akun Saya</span>
-                    </a>
+                {{-- Dashboard Owner (OWNER ONLY) --}}
+                @if(Auth::check() && Auth::user()->role == 'owner')
+                <li class="sidebar-item {{ request()->routeIs('owner.dashboard') ? 'selected' : '' }}">
+                  <a class="sidebar-link" href="{{ route('owner.dashboard') }}">
+                    <iconify-icon icon="solar:home-smile-bold-duotone" class="fs-6"></iconify-icon>
+                    <span class="hide-menu">Dashboard</span>
+                  </a>
                 </li>
+                @endif
+
+                {{-- Akun Saya menu dihapus untuk semua role --}}
 
                 {{-- ================= TRANSAKSI ================= --}}
                 {{-- Show for: Admin, Kasir, Owner --}}
@@ -119,19 +123,21 @@
                 @endif
 
                 {{-- ================= ANALISIS & PERAMALAN ================= --}}
-                {{-- Show for: Admin, Apoteker, Owner --}}
+                {{-- Show header for roles that see any analysis menu --}}
                 @if(Auth::check() && in_array(Auth::user()->role, ['admin', 'apoteker', 'owner']))
                 <li class="nav-small-cap">
                     <span class="hide-menu">ANALISIS</span>
                 </li>
 
-                {{-- Manajemen Stok & Peramalan --}}
+                {{-- Manajemen Stok & Peramalan (Admin & Apoteker only) --}}
+                @if(in_array(Auth::user()->role, ['admin', 'apoteker']))
                 <li class="sidebar-item {{ request()->routeIs('manajemen.*') ? 'selected' : '' }}">
-                    <a class="sidebar-link" href="{{ route('manajemen.index') }}">
-                        <iconify-icon icon="mdi:chart-line" class="fs-6"></iconify-icon>
-                        <span class="hide-menu">Peramalan & Stok</span>
-                    </a>
+                  <a class="sidebar-link" href="{{ route('manajemen.index') }}">
+                    <iconify-icon icon="mdi:chart-line" class="fs-6"></iconify-icon>
+                    <span class="hide-menu">Peramalan & Stok</span>
+                  </a>
                 </li>
+                @endif
 
                 {{-- Laporan (Admin & Owner) --}}
                 @if(in_array(Auth::user()->role, ['admin', 'owner']))

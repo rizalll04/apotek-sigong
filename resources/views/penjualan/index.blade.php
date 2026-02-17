@@ -57,9 +57,11 @@
                             <i class="bi bi-upload me-1"></i>Import
                         </button>
                     </form>
-                    <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#confirmDeleteAllModal">
-                        <i class="bi bi-trash me-1"></i>Hapus Semua
-                    </button>
+                    @if(Auth::check() && Auth::user()->role === 'admin')
+                        <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#confirmDeleteAllModal">
+                            <i class="bi bi-trash me-1"></i>Hapus Semua
+                        </button>
+                    @endif
                 </div>
             </div>
         </div>
@@ -102,33 +104,53 @@
                                     <strong class="text-primary">Rp {{ number_format($item->total_harga, 0, ',', '.') }}</strong>
                                 </td>
                                 <td class="align-middle">
-                                    @if($item->metode_pembayaran === 'Tunai')
+                                    @if($item->metode_pembayaran === 'Tunai' || $item->metode_pembayaran === 'Cash')
                                         <span class="badge bg-success">Tunai</span>
-                                    @else
+                                    @elseif($item->metode_pembayaran)
                                         <span class="badge bg-warning text-dark">{{ $item->metode_pembayaran }}</span>
+                                    @else
+                                        <span class="badge bg-secondary">-</span>
                                     @endif
                                 </td>
                                 <td class="align-middle">
-                                    @if($item->payment_status === 'Lunas')
+                                    @php
+                                        $status = $item->payment_status;
+                                        $label = $status === 'paid' ? 'Lunas' : ($status === 'pending' ? 'Pending' : $status);
+                                    @endphp
+                                    @if($label === 'Lunas')
                                         <span class="badge bg-success">Lunas</span>
-                                    @elseif($item->payment_status === 'Pending')
+                                    @elseif($label === 'Pending')
                                         <span class="badge bg-warning text-dark">Pending</span>
                                     @else
-                                        <span class="badge bg-secondary">{{ $item->payment_status }}</span>
+                                        <span class="badge bg-secondary">{{ $label ?? '-' }}</span>
                                     @endif
                                 </td>
                                 <td class="align-middle">{{ \Carbon\Carbon::parse($item->tanggal)->format('d M Y') }}</td>
                                 <td class="align-middle text-center">
-                                    <a href="{{ route('penjualan.edit', $item->id_penjualan) }}" class="btn btn-sm btn-outline-primary" title="Edit">
-                                        <i class="bi bi-pencil"></i>
-                                    </a>
-                                    <form action="{{ route('penjualan.destroy', $item->id_penjualan) }}" method="POST" class="d-inline">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Apakah Anda yakin?')" title="Hapus">
-                                            <i class="bi bi-trash"></i>
-                                        </button>
-                                    </form>
+                                    @php
+                                        $isNonTunai = ($item->metode_pembayaran === 'Non Tunai');
+                                        $buktiUrl = $item->bukti_transfer ? asset('storage/'.$item->bukti_transfer) : null;
+                                    @endphp
+
+                                    @if($isNonTunai && $buktiUrl)
+                                        <a href="{{ $buktiUrl }}" target="_blank" class="btn btn-sm btn-outline-secondary" title="Lihat Bukti Transfer">
+                                            <i class="bi bi-eye"></i>
+                                        </a>
+                                    @endif
+
+                                    @if(Auth::check() && Auth::user()->role === 'admin')
+                                        <form action="{{ route('penjualan.destroy', $item->id_penjualan) }}" method="POST" class="d-inline ms-1">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Apakah Anda yakin?')" title="Hapus">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        </form>
+                                    @endif
+
+                                    @if(!$isNonTunai || !$buktiUrl)
+                                        <span class="text-muted">-</span>
+                                    @endif
                                 </td>
                             </tr>
                         @empty
@@ -161,6 +183,7 @@
     </div>
 </div>
 
+@if(Auth::check() && Auth::user()->role === 'admin')
 <!-- Modal Konfirmasi Hapus Semua -->
 <div class="modal fade" id="confirmDeleteAllModal" tabindex="-1" aria-labelledby="confirmDeleteAllModalLabel" aria-hidden="true">
     <div class="modal-dialog">
@@ -186,5 +209,6 @@
         </div>
     </div>
 </div>
+@endif
 
 @endsection
