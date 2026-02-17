@@ -20,7 +20,7 @@
 
                     <!-- Detail Pembayaran -->
                     <div style="margin-top: 20px;">
-                        <table class="table" style="margin-bottom: 0;">
+                        <table class="table no-datatable" style="margin-bottom: 0;">
                             <thead>
                                 <tr>
                                     <th style="width: 50%;">Nama Produk</th>

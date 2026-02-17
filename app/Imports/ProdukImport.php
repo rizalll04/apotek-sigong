@@ -6,28 +6,44 @@ use Maatwebsite\Excel\Concerns\ToModel;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
 use PhpOffice\PhpSpreadsheet\Shared\Date;
 use Illuminate\Support\Facades\Log;
+use Carbon\Carbon;
 
 class ProdukImport implements ToModel, WithHeadingRow
 {
     public function model(array $row)
     {
         try {
+            // Skip jika baris kosong atau semua kolom penting kosong
+            if (empty($row) || (empty($row['nama'] ?? null) && empty($row['nama_produk'] ?? null))) {
+                return null;
+            }
+
+            // Flexible column mapping - handle berbagai kemungkinan nama kolom
+            $nama = $this->getColumnValue($row, ['nama', 'nama_produk', 'product_name', 'name']);
+            $stok = $this->getColumnValue($row, ['stok', 'stock', 'qty', 'jumlah']);
+            $harga_beli = $this->getColumnValue($row, ['harga_beli', 'harga_beli', 'buying_price', 'cost']);
+            $harga_jual = $this->getColumnValue($row, ['harga_jual', 'harga_jual', 'selling_price', 'price']);
+            $kategori = $this->getColumnValue($row, ['kategori', 'category', 'jenis']);
+            $keterangan = $this->getColumnValue($row, ['keterangan', 'description', 'deskripsi']);
+            $tanggal_kadaluarsa = $this->getColumnValue($row, ['tanggal_kadaluarsa', 'tanggal_exp', 'expiry_date', 'expired_date']);
+
+            // Validasi data required
+            if (empty($nama)) {
+                Log::warning('Import Produk: Nama produk kosong', ['row' => $row]);
+                return null;
+            }
+
+            // Parse tanggal
+            $parsedDate = $this->parseDate($tanggal_kadaluarsa);
+
             return new Produk([
-                'nama' => isset($row['nama']) && is_string($row['nama']) ? trim($row['nama']) : 'Unknown',
-
-                'stok' => isset($row['stok']) && is_numeric($row['stok']) ? (int) $row['stok'] : 0,
-
-                'harga_beli' => isset($row['harga_beli']) && is_numeric($row['harga_beli']) ? (float) $row['harga_beli'] : 0.0,
-
-                'harga_jual' => isset($row['harga_jual']) && is_numeric($row['harga_jual']) ? (float) $row['harga_jual'] : 0.0,
-
-                'kategori' => isset($row['kategori']) && is_string($row['kategori']) ? trim($row['kategori']) : 'Tidak Diketahui',
-
-                'keterangan' => isset($row['keterangan']) ? trim((string) $row['keterangan']) : null,
-
-                'tanggal_kadaluarsa' => isset($row['tanggal_kadaluarsa']) && $this->isValidExcelDate($row['tanggal_kadaluarsa']) 
-                    ? Date::excelToDateTimeObject($row['tanggal_kadaluarsa']) 
-                    : null,
+                'nama' => is_string($nama) ? trim((string)$nama) : 'Unknown',
+                'stok' => is_numeric($stok) ? (int)$stok : 0,
+                'harga_beli' => is_numeric($harga_beli) ? (float)$harga_beli : 0.0,
+                'harga_jual' => is_numeric($harga_jual) ? (float)$harga_jual : 0.0,
+                'kategori' => is_string($kategori) ? trim((string)$kategori) : 'Tidak Diketahui',
+                'keterangan' => is_string($keterangan) ? trim((string)$keterangan) : null,
+                'tanggal_kadaluarsa' => $parsedDate,
             ]);
         } catch (\Exception $e) {
             Log::error('Kesalahan saat mengimpor data produk: ' . $e->getMessage(), ['row' => $row]);
@@ -36,10 +52,58 @@ class ProdukImport implements ToModel, WithHeadingRow
     }
 
     /**
-     * Validasi apakah nilai tanggal dari Excel benar.
+     * Ambil nilai kolom dengan flexible naming
      */
-    private function isValidExcelDate($date)
+    private function getColumnValue(array $row, array $possibleNames)
     {
-        return is_numeric($date) && $date > 0;
+        foreach ($possibleNames as $name) {
+            if (isset($row[$name]) && !empty($row[$name])) {
+                return $row[$name];
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Parse tanggal dari berbagai format
+     */
+    private function parseDate($date)
+    {
+        if (empty($date)) {
+            return null;
+        }
+
+        try {
+            // Jika numeric Excel date
+            if (is_numeric($date) && $date > 0) {
+                return Date::excelToDateTimeObject($date)->format('Y-m-d');
+            }
+
+            // Jika string date format
+            if (is_string($date)) {
+                $date = trim($date);
+                
+                // Coba parse dengan berbagai format
+                $formats = ['Y-m-d', 'd-m-Y', 'm-d-Y', 'Y/m/d', 'd/m/Y', 'm/d/Y', 'd/m/Y H:i', 'Y-m-d H:i'];
+                
+                foreach ($formats as $format) {
+                    try {
+                        $parsed = Carbon::createFromFormat($format, $date);
+                        return $parsed->format('Y-m-d');
+                    } catch (\Exception $e) {
+                        continue;
+                    }
+                }
+
+                // Fallback: gunakan Carbon's natural parsing
+                $parsed = Carbon::parse($date);
+                return $parsed->format('Y-m-d');
+            }
+
+            return null;
+        } catch (\Exception $e) {
+            Log::warning('Gagal parse tanggal: ' . $date . ' - ' . $e->getMessage());
+            return null;
+        }
     }
 }

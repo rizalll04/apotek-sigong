@@ -115,6 +115,7 @@ class PersediaanController extends Controller
                 'alpha' => null,
                 'beta' => null,
                 'gamma' => null,
+                'optimizedParametersUsed' => false,
             ]);
         }
 
@@ -163,6 +164,7 @@ class PersediaanController extends Controller
                 'alpha' => null,
                 'beta' => null,
                 'gamma' => null,
+                'optimizedParametersUsed' => false,
             ]);
         }
 

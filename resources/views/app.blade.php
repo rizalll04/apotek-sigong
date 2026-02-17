@@ -9,13 +9,14 @@
   <link rel="stylesheet" href="{{ asset('assets/css/custom.css') }}">
   <link rel="shortcut icon" type="image/png" href="{{ asset('public/assets/images/apotek.png') }}" />
 
-  <!-- Tambahkan di bagian <head> -->
 <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-beta.1/dist/css/select2.min.css" rel="stylesheet" />
 <script src="https://code.iconify.design/2/2.0.3/iconify.min.js"></script>
 <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
+  <!-- DataTables CSS -->
+  <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
+  <link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.5.0/css/responsive.dataTables.min.css">
 
 
-<!-- Tambahkan di bagian sebelum penutupan </body> -->
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-beta.1/dist/js/select2.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -23,7 +24,7 @@
 
 <body>
   <!--  Body Wrapper -->
-  <div class="page-wrapper" id="main-wrapper" data-layout="vertical" data-navbarbg="skin6" data-sidebartype="full"
+  <div class="page-wrapper" id="main-wrapper" data-layout="vertical" data-navbarbg="skin1" data-sidebartype="full"
     data-sidebar-position="fixed" data-header-position="fixed">
     <!-- Sidebar Start -->
     <aside class="left-sidebar">
@@ -50,12 +51,13 @@
         <nav class="sidebar-nav scroll-sidebar" data-simplebar>
             <ul id="sidebarnav">
 
-                {{-- ================= DASHBOARD ================= --}}
-                @if(Auth::check() && in_array(Auth::user()->role, ['admin','owner']))
+                {{-- ================= MAIN (Dashboard & Profile) ================= --}}
                 <li class="nav-small-cap">
                     <span class="hide-menu">MAIN</span>
                 </li>
 
+                {{-- Dashboard (ADMIN ONLY) --}}
+                @if(Auth::check() && Auth::user()->role == 'admin')
                 <li class="sidebar-item {{ request()->routeIs('admin.index') ? 'selected' : '' }}">
                     <a class="sidebar-link" href="{{ route('admin.index') }}">
                         <iconify-icon icon="solar:home-smile-bold-duotone" class="fs-6"></iconify-icon>
@@ -64,89 +66,96 @@
                 </li>
                 @endif
 
+                {{-- Profile (ALL USERS) --}}
+                <li class="sidebar-item {{ request()->routeIs('pengguna.index') ? 'selected' : '' }}">
+                    <a class="sidebar-link" href="{{ route('pengguna.index') }}">
+                        <iconify-icon icon="solar:user-bold-duotone" class="fs-6"></iconify-icon>
+                        <span class="hide-menu">Akun Saya</span>
+                    </a>
+                </li>
+
                 {{-- ================= TRANSAKSI ================= --}}
-                @if(Auth::check() && in_array(Auth::user()->role, ['admin','kasir']))
+                {{-- Show for: Admin, Kasir, Owner --}}
+                @if(Auth::check() && in_array(Auth::user()->role, ['admin', 'kasir', 'owner']))
                 <li class="nav-small-cap">
                     <span class="hide-menu">TRANSAKSI</span>
                 </li>
 
+                {{-- Input Transaksi (Admin & Kasir - via Keranjang) --}}
+                @if(in_array(Auth::user()->role, ['admin', 'kasir']))
                 <li class="sidebar-item {{ request()->routeIs('keranjang.*') ? 'selected' : '' }}">
                     <a class="sidebar-link" href="{{ route('keranjang.index') }}">
                         <iconify-icon icon="mdi:cash-register" class="fs-6"></iconify-icon>
-                        <span class="hide-menu">Penjualan</span>
+                        <span class="hide-menu">Input Transaksi</span>
                     </a>
                 </li>
+                @endif
 
+                {{-- Riwayat Transaksi (Admin & Kasir only) --}}
+                @if(in_array(Auth::user()->role, ['admin', 'kasir']))
                 <li class="sidebar-item {{ request()->routeIs('penjualan.*') ? 'selected' : '' }}">
                     <a class="sidebar-link" href="{{ route('penjualan.index') }}">
                         <iconify-icon icon="mdi:history" class="fs-6"></iconify-icon>
-                        <span class="hide-menu">Riwayat Penjualan</span>
+                        <span class="hide-menu">Riwayat Transaksi</span>
                     </a>
                 </li>
                 @endif
+                @endif
 
-                {{-- ================= MASTER DATA ================= --}}
-                @if(Auth::check() && in_array(Auth::user()->role, ['admin','kasir']))
+                {{-- ================= PRODUK & STOK ================= --}}
+                {{-- Show for: Admin, Apoteker --}}
+                @if(Auth::check() && in_array(Auth::user()->role, ['admin', 'apoteker']))
                 <li class="nav-small-cap">
-                    <span class="hide-menu">MASTER DATA</span>
+                    <span class="hide-menu">PRODUK & STOK</span>
                 </li>
 
+                {{-- Kelola Produk --}}
                 <li class="sidebar-item {{ request()->routeIs('produk.*') ? 'selected' : '' }}">
                     <a class="sidebar-link" href="{{ route('produk.index') }}">
                         <iconify-icon icon="mdi:package" class="fs-6"></iconify-icon>
-                        <span class="hide-menu">Data Obat</span>
+                        <span class="hide-menu">Kelola Produk</span>
                     </a>
                 </li>
                 @endif
 
-                {{-- ================= PEMBELIAN & PREDIKSI ================= --}}
-                @if(Auth::check() && in_array(Auth::user()->role, ['admin','apoteker']))
+                {{-- ================= ANALISIS & PERAMALAN ================= --}}
+                {{-- Show for: Admin, Apoteker, Owner --}}
+                @if(Auth::check() && in_array(Auth::user()->role, ['admin', 'apoteker', 'owner']))
                 <li class="nav-small-cap">
-                    <span class="hide-menu">STOK & ANALISIS</span>
+                    <span class="hide-menu">ANALISIS</span>
                 </li>
 
-                <li class="sidebar-item {{ request()->routeIs('pembelian.*') ? 'selected' : '' }}">
-                    <a class="sidebar-link" href="{{ route('pembelian.index') }}">
-                        <iconify-icon icon="solar:cart-bold-duotone" class="fs-6"></iconify-icon>
-                        <span class="hide-menu">Pembelian</span>
-                    </a>
-                </li>
-
-                <li class="sidebar-item {{ request()->routeIs('pembelian.riwayat') ? 'selected' : '' }}">
-                    <a class="sidebar-link" href="{{ route('pembelian.riwayat') }}">
-                        <iconify-icon icon="mdi:history" class="fs-6"></iconify-icon>
-                        <span class="hide-menu">Riwayat Pembelian</span>
-                    </a>
-                </li>
-
+                {{-- Manajemen Stok & Peramalan --}}
                 <li class="sidebar-item {{ request()->routeIs('manajemen.*') ? 'selected' : '' }}">
                     <a class="sidebar-link" href="{{ route('manajemen.index') }}">
                         <iconify-icon icon="mdi:chart-line" class="fs-6"></iconify-icon>
-                        <span class="hide-menu">Peramalan TES</span>
+                        <span class="hide-menu">Peramalan & Stok</span>
+                    </a>
+                </li>
+
+                {{-- Laporan (Admin & Owner) --}}
+                @if(in_array(Auth::user()->role, ['admin', 'owner']))
+                <li class="sidebar-item {{ request()->routeIs('penjualan.laporan') ? 'selected' : '' }}">
+                    <a class="sidebar-link" href="{{ route('penjualan.laporan') }}">
+                        <iconify-icon icon="mdi:file-chart" class="fs-6"></iconify-icon>
+                        <span class="hide-menu">Laporan</span>
                     </a>
                 </li>
                 @endif
+                @endif
 
-                {{-- ================= ADMIN ================= --}}
+                {{-- ================= ADMIN PANEL ================= --}}
+                {{-- Show for: Admin ONLY --}}
                 @if(Auth::check() && Auth::user()->role == 'admin')
                 <li class="nav-small-cap">
                     <span class="hide-menu">ADMIN</span>
                 </li>
 
+                {{-- Kelola Pengguna --}}
                 <li class="sidebar-item {{ request()->routeIs('user.*') ? 'selected' : '' }}">
                     <a class="sidebar-link" href="{{ route('user.index') }}">
                         <iconify-icon icon="mdi:account-group" class="fs-6"></iconify-icon>
-                        <span class="hide-menu">Data Pegawai</span>
-                    </a>
-                </li>
-                @endif
-
-                {{-- ================= LAPORAN ================= --}}
-                @if(Auth::check() && in_array(Auth::user()->role, ['admin','owner']))
-                <li class="sidebar-item {{ request()->routeIs('penjualan.laporan') ? 'selected' : '' }}">
-                    <a class="sidebar-link" href="{{ route('penjualan.laporan') }}">
-                        <iconify-icon icon="mdi:file-chart" class="fs-6"></iconify-icon>
-                        <span class="hide-menu">Laporan</span>
+                        <span class="hide-menu">Kelola Pengguna</span>
                     </a>
                 </li>
                 @endif
@@ -226,6 +235,29 @@
     <script src="{{asset('assets/js/app.min.js')}}"></script>
     <script src="{{asset('assets/js/dashboard.js')}}"></script>
     <script src="https://cdn.jsdelivr.net/npm/iconify-icon@1.0.8/dist/iconify-icon.min.js"></script>
+    <!-- DataTables JS -->
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/responsive/2.5.0/js/dataTables.responsive.min.js"></script>
+
+    <script>
+      $(document).ready(function() {
+        $('table:not(.no-datatable)').each(function() {
+          try {
+            if (!$.fn.DataTable.isDataTable(this)) {
+              $(this).DataTable({
+                responsive: true,
+                autoWidth: false,
+                lengthMenu: [5, 10, 25, 50, 100],
+                pageLength: 10,
+                order: []
+              });
+            }
+          } catch (e) {
+            console.error('DataTable init error:', e);
+          }
+        });
+      });
+    </script>
   </body>
   
   </html>

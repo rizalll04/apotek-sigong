@@ -26,6 +26,7 @@ class Penjualan extends Model
         'metode_pembayaran',
         'midtrans_order_id',
         'payment_status',
+        'bukti_transfer',
         'tanggal', // Tambahkan kolom 'tanggal' ke dalam $fillable
     ];
 

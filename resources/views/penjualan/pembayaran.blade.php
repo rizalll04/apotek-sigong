@@ -21,7 +21,7 @@
 
                     <!-- Detail Produk -->
                     <div class="mb-3">
-                        <table class="table table-sm table-striped">
+                        <table class="table table-sm table-striped no-datatable">
                             <thead class="table-light">
                                 <tr>
                                     <th>Nama Produk</th>

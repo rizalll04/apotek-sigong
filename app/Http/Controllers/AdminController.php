@@ -68,5 +68,64 @@ class AdminController extends Controller
     ));
 }
 
+/**
+ * Owner Dashboard - Ringkasan data dan statistik apotek
+ * Read-only view untuk owner tanpa action buttons
+ */
+public function ownerDashboard(Request $request)
+{
+    // Mendapatkan tahun yang dipilih, jika tidak ada maka default ke tahun sekarang
+    $tahun = $request->input('tahun', \date('Y'));
+
+    // Menghitung total produk
+    $totalProduk = Produk::count();
+
+    // Menghitung total penjualan
+    $totalPenjualan = Penjualan::whereYear('tanggal', $tahun)->sum('total_harga');
+
+    // Menghitung stok produk yang tersisa
+    $stokTersisa = Produk::sum('stok');
+
+    // Menghitung total jumlah produk yang terjual
+    $totalProdukTerjual = Penjualan::whereYear('tanggal', $tahun)->sum('jumlah');
+
+    // Grafik penjualan per bulan
+    $grafikPenjualanLabels = Penjualan::whereYear('tanggal', $tahun)
+        ->selectRaw('MONTH(tanggal) as bulan')
+        ->groupByRaw('MONTH(tanggal)')
+        ->pluck('bulan')
+        ->map(function ($bulan) {
+            $namaBulan = [
+                1 => 'Januari', 2 => 'Februari', 3 => 'Maret', 4 => 'April',
+                5 => 'Mei', 6 => 'Juni', 7 => 'Juli', 8 => 'Agustus',
+                9 => 'September', 10 => 'Oktober', 11 => 'November', 12 => 'Desember'
+            ];
+            return $namaBulan[$bulan] ?? 'Tidak Diketahui';
+        });
+
+    $grafikPenjualanData = Penjualan::whereYear('tanggal', $tahun)
+        ->selectRaw('SUM(total_harga) as total_penjualan')
+        ->groupByRaw('MONTH(tanggal)')
+        ->pluck('total_penjualan');
+
+    // Produk terlaris
+    $produkTerlaris = Produk::withCount('penjualan')
+        ->orderByDesc('penjualan_count')
+        ->take(5)
+        ->get();
+
+    // Kirim data ke view
+    return view('admin.owner-dashboard', compact(
+        'totalProduk', 
+        'totalPenjualan', 
+        'stokTersisa',
+        'totalProdukTerjual',
+        'grafikPenjualanLabels', 
+        'grafikPenjualanData', 
+        'produkTerlaris',
+        'tahun'
+    ));
+}
+
     
 }

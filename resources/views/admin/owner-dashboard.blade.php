@@ -4,7 +4,7 @@
 <div class="container-fluid">
     <!-- Page Header -->
     <div class="mb-4">
-        <h1 class="page-title mb-2"><i class="bi bi-speedometer2"></i> Dashboard</h1>
+        <h1 class="page-title mb-2"><i class="bi bi-speedometer2"></i> Dashboard Owner</h1>
         <p class="page-subtitle">Ringkasan data dan statistik apotek Anda</p>
     </div>
 
@@ -79,39 +79,6 @@
         </div>
     </div>
 
-    <!-- Quick Actions -->
-    <div class="card border-0 shadow-sm mb-4">
-        <div class="card-header bg-light">
-            <h5 class="mb-0"><i class="bi bi-lightning"></i> Aksi Cepat</h5>
-        </div>
-        <div class="card-body">
-            <div class="row g-3">
-                <div class="col-md-6">
-                    <a href="{{ route('keranjang.index') }}" class="btn btn-outline-primary d-flex align-items-center gap-3 p-3 w-100" style="text-decoration: none; height: 100%; border-radius: 0.75rem;">
-                        <div class="p-2" style="background: rgba(13, 110, 253, 0.1); border-radius: 0.5rem;">
-                            <i class="bi bi-cart-fill" style="font-size: 1.5rem; color: #0d6efd;"></i>
-                        </div>
-                        <div class="text-start">
-                            <div class="fw-600">Transaksi Baru</div>
-                            <small class="text-muted">Mulai transaksi penjualan baru</small>
-                        </div>
-                    </a>
-                </div>
-                <div class="col-md-6">
-                    <a href="{{ route('produk.index') }}" class="btn btn-outline-success d-flex align-items-center gap-3 p-3 w-100" style="text-decoration: none; height: 100%; border-radius: 0.75rem;">
-                        <div class="p-2" style="background: rgba(25, 135, 84, 0.1); border-radius: 0.5rem;">
-                            <i class="bi bi-box-seam" style="font-size: 1.5rem; color: #198754;"></i>
-                        </div>
-                        <div class="text-start">
-                            <div class="fw-600">Kelola Produk</div>
-                            <small class="text-muted">Tambah, edit, atau hapus produk</small>
-                        </div>
-                    </a>
-                </div>
-            </div>
-        </div>
-    </div>
-
     <!-- Charts Section -->
     <div class="row g-3 mb-4 align-items-start">
         <!-- Sales Chart -->
@@ -119,17 +86,17 @@
             <div class="card border-0 shadow-sm h-100">
                 <div class="card-header bg-light d-flex justify-content-between align-items-center">
                     <h5 class="mb-0"><i class="bi bi-graph-up"></i> Grafik Penjualan</h5>
-                    <form method="GET" action="{{ route('admin.index') }}" class="d-flex align-items-center gap-2">
+                    <form method="GET" action="{{ route('owner.dashboard') }}" class="d-flex align-items-center gap-2">
                         <label for="tahun" class="form-label mb-0 me-1">Tahun:</label>
                         <select name="tahun" id="tahun" class="form-select" style="width: 120px;" onchange="this.form.submit()">
-                            @foreach(range(date('Y'), 2000) as $tahun)
-                                <option value="{{ $tahun }}" {{ request('tahun') == $tahun ? 'selected' : '' }}>{{ $tahun }}</option>
+                            @foreach(range(date('Y'), 2000) as $tahunOption)
+                                <option value="{{ $tahunOption }}" {{ request('tahun') == $tahunOption ? 'selected' : '' }}>{{ $tahunOption }}</option>
                             @endforeach
                         </select>
                     </form>
                 </div>
                 <div class="card-body">
-                    <div id="traffic-overvieww"></div>
+                    <div id="traffic-overview"></div>
                 </div>
             </div>
         </div>
@@ -147,15 +114,14 @@
                                 <div class="d-flex justify-content-between align-items-center">
                                     <div>
                                         <h6 class="mb-1">{{ $produk->nama }}</h6>
-                                        <small class="text-muted">Terjual</small>
+                                        <small class="text-muted">Penjualan</small>
                                     </div>
-                                    <span class="badge bg-primary rounded-pill">{{ $produk->penjualan_count }} unit</span>
+                                    <span class="badge bg-primary">{{ $produk->penjualan_count }}</span>
                                 </div>
                             </div>
                         @empty
-                            <div class="text-center py-4 text-muted">
-                                <i class="bi bi-inbox" style="font-size: 2rem;"></i>
-                                <p class="mt-2">Tidak ada data</p>
+                            <div class="list-group-item text-center py-4">
+                                <p class="text-muted mb-0">Belum ada data penjualan</p>
                             </div>
                         @endforelse
                     </div>
@@ -163,82 +129,124 @@
             </div>
         </div>
     </div>
+
+    <!-- Links to Reports -->
+    <div class="row g-3">
+        <div class="col-lg-6">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0"><i class="bi bi-file-text"></i> Laporan</h5>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted mb-3">Lihat laporan penjualan lengkap dengan berbagai filter dan analisis detail.</p>
+                    <a href="{{ route('penjualan.laporan') }}" class="btn btn-primary">
+                        <i class="bi bi-arrow-right me-2"></i> Buka Laporan
+                    </a>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-6">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0"><i class="bi bi-graph-up-arrow"></i> Peramalan</h5>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted mb-3">Analisis tren penjualan dan peramalan permintaan produk untuk perencanaan inventory.</p>
+                    <a href="{{ route('manajemen.index') }}" class="btn btn-primary">
+                        <i class="bi bi-arrow-right me-2"></i> Lihat Peramalan
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 
-<!-- Script untuk Grafik Chart.js -->
+<!-- Chart Script -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/apexcharts/3.35.0/apexcharts.min.js"></script>
 <script>
-    $(function () {
-      // -----------------------------------------------------------------------
-      // Grafik Penjualan per Bulan
-      // -----------------------------------------------------------------------
-      
-      var chart = {
-        series: [
-          {
-            name: "Total Penjualan",
-            data: @json($grafikPenjualanData),
-          },
-        ],
+    // Sales Chart
+    var options = {
+        series: [{
+            name: 'Penjualan',
+            data: {!! json_encode($grafikPenjualanData) !!}
+        }],
         chart: {
-          toolbar: {
-            show: false,
-          },
-          type: "line",
-          fontFamily: "inherit",
-          foreColor: "#adb0bb",
-          height: 320,
-          stacked: false,
+            type: 'area',
+            height: 350,
+            toolbar: {
+                show: false
+            },
+            sparkline: {
+                enabled: false
+            }
         },
-        colors: ["var(--bs-primary)"],
-        plotOptions: {},
+        colors: ['#0d6efd'],
         dataLabels: {
-          enabled: false,
-        },
-        legend: {
-          show: false,
+            enabled: false
         },
         stroke: {
-          width: 2,
-          curve: "smooth",
-          dashArray: [8, 0],
+            curve: 'smooth',
+            width: 2
         },
-        grid: {
-          borderColor: "rgba(0,0,0,0.1)",
-          strokeDashArray: 3,
-          xaxis: {
-            lines: {
-              show: false,
-            },
-          },
-        },
-        yaxis: {
-          tickAmount: 4,
+        fill: {
+            type: 'gradient',
+            gradient: {
+                shadeIntensity: 1,
+                opacityFrom: 0.45,
+                opacityTo: 0.05,
+                stops: [20, 100, 100, 100]
+            }
         },
         xaxis: {
-          axisBorder: {
-            show: false,
-          },
-          axisTicks: {
-            show: false,
-          },
-          categories: @json($grafikPenjualanLabels),
+            categories: {!! json_encode($grafikPenjualanLabels) !!},
+            axisBorder: {
+                show: false
+            },
+            axisTicks: {
+                show: false
+            }
         },
-        markers: {
-          strokeColor: ["var(--bs-primary)"],
-          strokeWidth: 2,
+        yaxis: {
+            title: {
+                text: 'Rp'
+            }
         },
         tooltip: {
-          theme: "dark",
-        },
-      };
-  
-      var chart = new ApexCharts(
-        document.querySelector("#traffic-overvieww"),
-        chart
-      );
-      chart.render();
-    });
+            x: {
+                format: 'dddd'
+            },
+            y: {
+                formatter: function(val) {
+                    return 'Rp ' + new Intl.NumberFormat('id-ID').format(val);
+                }
+            }
+        }
+    };
+
+    var chart = new ApexCharts(document.querySelector("#traffic-overview"), options);
+    chart.render();
 </script>
 
-@endsection
+<!-- Additional Styles -->
+<style>
+    .page-title {
+        font-size: 2rem;
+        font-weight: 700;
+        color: #212529;
+    }
 
+    .page-subtitle {
+        font-size: 0.95rem;
+        color: #6c757d;
+    }
+
+    .list-group-item {
+        padding: 1rem;
+        border-bottom: 1px solid #e9ecef;
+    }
+
+    .list-group-item:last-child {
+        border-bottom: none;
+    }
+</style>
+@endsection

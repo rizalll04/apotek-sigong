@@ -67,9 +67,9 @@ class UserController extends Controller
                 return redirect()->route('admin.index');
 
             case 'owner':
-                // Jika role manajer, redirect ke dashboard laporan penjualan
+                // Jika role owner, redirect ke owner dashboard
                 $request->session()->regenerate();
-                return redirect()->route('penjualan.laporan');
+                return redirect()->route('owner.dashboard');
 
             case 'kasir':
                 // Jika role kasir, redirect ke halaman keranjang
@@ -142,6 +142,39 @@ class UserController extends Controller
       return view('user.index', compact('users')); // Menampilkan ke view 'user.index'
   }
 
+  // Fungsi Tampilkan Form Buat Pengguna
+  public function create()
+  {
+      return view('user.create');
+  }
+
+  // Fungsi Simpan Pengguna Baru
+  public function store(Request $request)
+  {
+      $request->validate([
+          'name' => 'required|string|max:255',
+          'username' => 'required|string|max:255|unique:tb_user,username',
+          'role' => 'required|in:admin,kasir,owner,apoteker',
+          'password' => 'required|string|min:8|confirmed',
+      ], [
+          'name.required' => 'Nama wajib diisi',
+          'username.required' => 'Username wajib diisi',
+          'username.unique' => 'Username sudah terdaftar',
+          'role.required' => 'Peran wajib dipilih',
+          'password.required' => 'Password wajib diisi',
+          'password.confirmed' => 'Konfirmasi password tidak cocok',
+      ]);
+
+      User::create([
+          'name' => $request->name,
+          'username' => $request->username,
+          'role' => $request->role,
+          'password' => Hash::make($request->password),
+      ]);
+
+      return redirect()->route('user.index')->with('success', 'Pengguna berhasil ditambahkan');
+  }
+
   // Fungsi Edit Pengguna
   public function edit($id)
   {
@@ -155,8 +188,14 @@ class UserController extends Controller
       $request->validate([
           'name' => 'required|string|max:255',
           'username' => 'required|string|max:255|unique:tb_user,username,' . $id . ',user_id',
-          'role' => 'required|in:admin,user',
-          'password' => 'nullable|string|min:8|confirmed', // Menambahkan konfirmasi password
+          'role' => 'required|in:admin,kasir,owner,apoteker',
+          'password' => 'nullable|string|min:8|confirmed',
+      ], [
+          'name.required' => 'Nama wajib diisi',
+          'username.required' => 'Username wajib diisi',
+          'username.unique' => 'Username sudah terdaftar',
+          'role.required' => 'Peran wajib dipilih',
+          'password.confirmed' => 'Konfirmasi password tidak cocok',
       ]);
   
       // Temukan pengguna berdasarkan ID
@@ -176,7 +215,7 @@ class UserController extends Controller
       $user->save();
   
       // Redirect ke halaman pengguna dengan pesan sukses
-      return redirect()->route('user.index')->with('success', 'User updated successfully');
+      return redirect()->route('user.index')->with('success', 'Pengguna berhasil diperbarui');
   }
   
   

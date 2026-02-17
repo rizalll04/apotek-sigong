@@ -12,17 +12,25 @@ use App\Http\Controllers\PersediaanController;
 use App\Http\Controllers\PembelianController;
 use App\Models\Penjualan;
 
-// Route untuk menyimpan penjualan baru
-Route::post('penjualan', [PenjualanController::class, 'store'])->name('penjualan.store');
-Route::get('penjualan/{id_penjualan}/edit', [PenjualanController::class, 'edit'])->name('penjualan.edit');
-Route::put('penjualan/{id_penjualan}', [PenjualanController::class, 'update'])->name('penjualan.update');
-Route::delete('penjualan/{id_penjualan}', [PenjualanController::class, 'destroy'])->name('penjualan.destroy');
-Route::get('/penjualan', [PenjualanController::class, 'index'])->name('penjualan.index');
-Route::get('/penjualan/struk', [PenjualanController::class, 'struk'])->name('penjualan.struk');
+// Penjualan Routes (Admin, Kasir, Owner)
+Route::middleware(['auth', 'role:admin,kasir,owner'])->group(function () {
+    Route::post('penjualan', [PenjualanController::class, 'store'])->name('penjualan.store');
+    Route::get('/penjualan', [PenjualanController::class, 'index'])->name('penjualan.index');
+});
 
+// Penjualan Edit & Delete (Admin & Kasir Only)
+Route::middleware(['auth', 'role:admin,kasir'])->group(function () {
+    Route::get('penjualan/{id_penjualan}/edit', [PenjualanController::class, 'edit'])->name('penjualan.edit');
+    Route::put('penjualan/{id_penjualan}', [PenjualanController::class, 'update'])->name('penjualan.update');
+    Route::delete('penjualan/{id_penjualan}', [PenjualanController::class, 'destroy'])->name('penjualan.destroy');
+    Route::post('/penjualan/simpan', [PenjualanController::class, 'simpanDariKeranjang'])->name('penjualan.simpan');
+});
 
-// Pembayaran
-Route::get('/penjualan/pembayaran', [PenjualanController::class, 'halamanPembayaranNonTunai'])->name('penjualan.pembayaran');
+// Penjualan Receipt & Payment (All Authenticated)
+Route::middleware(['auth'])->group(function () {
+    Route::get('/penjualan/struk', [PenjualanController::class, 'struk'])->name('penjualan.struk');
+    Route::get('/penjualan/pembayaran', [PenjualanController::class, 'halamanPembayaranNonTunai'])->name('penjualan.pembayaran');
+});
 //pembayaran midtrans
 use App\Http\Controllers\MidtransController;
 
@@ -42,32 +50,40 @@ Route::get('/bayar/success/{order_id}', [MidtransController::class, 'finish'])->
 
 
 
-Route::get('/penjualan/laporan', [PenjualanController::class, 'laporan'])->name('penjualan.laporan');
-Route::post('/penjualan/simpan', [PenjualanController::class, 'simpanDariKeranjang'])->name('penjualan.simpan');
 
-
-// Route untuk menampilkan daftar data persediaan (KHUSUS Apoteker)
-Route::get('/persediaan', [PersediaanController::class, 'index'])->name('manajemen.index');
-Route::get('/manajemen/prediksi/{id}', [PersediaanController::class, 'prediksi'])->name('manajemen.prediksi');
+// Laporan & Dashboard (Admin, Owner, Apoteker)
+Route::middleware(['auth', 'role:admin,owner,apoteker'])->get('/penjualan/laporan', [PenjualanController::class, 'laporan'])->name('penjualan.laporan');
 
 
 
-
-// KERANJANG
-Route::get('/keranjang', [KeranjangController::class, 'index'])->name('keranjang.index');
-Route::post('/keranjang/tambah', [KeranjangController::class, 'tambahKeKeranjang'])->name('keranjang.tambah');
-Route::post('/keranjang/ubah-jumlah/{idKeranjang}', [KeranjangController::class, 'ubahJumlah'])->name('keranjang.ubah-jumlah');
-Route::delete('/keranjang/hapus/{id}', [KeranjangController::class, 'hapus'])->name('keranjang.hapus');
-
-
-Route::resource('produk', ProdukController::class);
+// Manajemen Persediaan & Prediksi (Admin, Apoteker, Owner)
+Route::middleware(['auth', 'role:admin,apoteker,owner'])->group(function () {
+    Route::get('/persediaan', [PersediaanController::class, 'index'])->name('manajemen.index');
+    Route::get('/manajemen/prediksi/{id}', [PersediaanController::class, 'prediksi'])->name('manajemen.prediksi');
+});
 
 
-// pembelian
-Route::get('/pembelian', [PembelianController::class, 'index'])->name('pembelian.index');
-Route::post('/pembelian', [PembelianController::class, 'store'])->name('pembelian.store');
-Route::get('/pencarian-produk', [PembelianController::class, 'searchProduk'])->name('produk.search');
-Route::get('/riwayat-pembelian', [PembelianController::class, 'riwayat'])->name('pembelian.riwayat');
+
+
+// KERANJANG (Admin & Kasir Only)
+Route::middleware(['auth', 'role:admin,kasir'])->group(function () {
+    Route::get('/keranjang', [KeranjangController::class, 'index'])->name('keranjang.index');
+    Route::post('/keranjang/tambah', [KeranjangController::class, 'tambahKeKeranjang'])->name('keranjang.tambah');
+    Route::post('/keranjang/ubah-jumlah/{idKeranjang}', [KeranjangController::class, 'ubahJumlah'])->name('keranjang.ubah-jumlah');
+    Route::delete('/keranjang/hapus/{id}', [KeranjangController::class, 'hapus'])->name('keranjang.hapus');
+});
+
+// PRODUK Management (Admin & Apoteker)
+Route::middleware(['auth', 'role:admin,apoteker'])->group(function () {
+    Route::resource('produk', ProdukController::class);
+});
+
+
+// // pembelian
+// Route::get('/pembelian', [PembelianController::class, 'index'])->name('pembelian.index');
+// Route::post('/pembelian', [PembelianController::class, 'store'])->name('pembelian.store');
+// Route::get('/pencarian-produk', [PembelianController::class, 'searchProduk'])->name('produk.search');
+// Route::get('/riwayat-pembelian', [PembelianController::class, 'riwayat'])->name('pembelian.riwayat');
 
 
 
@@ -87,17 +103,15 @@ Route::get('/riwayat-pembelian', [PembelianController::class, 'riwayat'])->name(
 
 
 
-/// Menampilkan daftar user
-Route::get('users', [UserController::class, 'index'])->name('user.index');
-
-// Menampilkan form edit user
-Route::get('users/{id}/edit', [UserController::class, 'edit'])->name('user.edit');
-
-// Update user
-Route::put('users/{id}', [UserController::class, 'update'])->name('user.update');
-
-// Hapus user
-Route::delete('users/{id}', [UserController::class, 'destroy'])->name('user.destroy');
+// User Management (ADMIN ONLY)
+Route::middleware(['auth', 'role:admin'])->group(function () {
+    Route::get('users', [UserController::class, 'index'])->name('user.index');
+    Route::get('users/create', [UserController::class, 'create'])->name('user.create');
+    Route::post('users', [UserController::class, 'store'])->name('user.store');
+    Route::get('users/{id}/edit', [UserController::class, 'edit'])->name('user.edit');
+    Route::put('users/{id}', [UserController::class, 'update'])->name('user.update');
+    Route::delete('users/{id}', [UserController::class, 'destroy'])->name('user.destroy');
+});
 
 
 Route::get('/', [UserController::class, 'login'])->name('login');
@@ -112,10 +126,14 @@ Route::get('logout', [UserController::class, 'logout'])->name('logout');
 
 
 
-// Routes untuk admin
-Route::get('/admin', [AdminController::class, 'index'])->name('admin.index');
-// Routes untuk user
-Route::get('/landing', [PenggunaController::class, 'index'])->name('pengguna.index');
+// Dashboard (ADMIN ONLY)
+Route::middleware(['auth', 'role:admin'])->get('/admin', [AdminController::class, 'index'])->name('admin.index');
+
+// Owner Dashboard
+Route::middleware(['auth', 'role:owner'])->get('/owner', [AdminController::class, 'ownerDashboard'])->name('owner.dashboard');
+
+// Landing Page (All Authenticated Users)
+Route::middleware(['auth'])->get('/landing', [PenggunaController::class, 'index'])->name('pengguna.index');
 
 
 use App\Http\Controllers\ProfilController;
@@ -135,11 +153,32 @@ Route::get('/profil/edit/{id}', [ProfilController::class, 'edit'])->name('profil
 Route::put('/profil/update/{id}', [ProfilController::class, 'update'])->name('profil.update');
 
 
-Route::get('import', [ProdukController::class, 'showImport'])->name('produk.import.form');
-Route::post('/produk/import', [ProdukController::class, 'import'])->name('produk.import');
+// Import Routes
+Route::middleware(['auth', 'role:admin,apoteker'])->group(function () {
+    Route::get('import', [ProdukController::class, 'showImport'])->name('produk.import.form');
+    Route::post('/produk/import', [ProdukController::class, 'import'])->name('produk.import');
+    Route::post('/produk/deleteAll', [ProdukController::class, 'deleteAll'])->name('produk.deleteAll');
+});
 
+Route::middleware(['auth', 'role:admin,kasir'])->group(function () {
+    Route::get('importpenjualan', [PenjualanController::class, 'showImport'])->name('penjualan.import');
+    Route::post('/penjualan/import/process', [PenjualanController::class, 'import'])->name('penjualan.import.process');
+    Route::post('/penjualan/deleteAll', [PenjualanController::class, 'deleteAll'])->name('penjualan.deleteAll');
+});
 
-Route::get('importpenjualan', [PenjualanController::class, 'showImport'])->name('penjualan.import');
-Route::post('/penjualan/import/process', [PenjualanController::class, 'import'])->name('penjualan.import.process');// Tambahkan route untuk deleteAll
-Route::post('/penjualan/deleteAll', [PenjualanController::class, 'deleteAll'])->name('penjualan.deleteAll');
-Route::post('/produk/deleteAll', [ProdukController::class, 'deleteAll'])->name('produk.deleteAll');
+// Catchall route - Redirect URL yang tidak ditemukan sesuai role
+Route::fallback(function () {
+    if (auth()->check()) {
+        $user = auth()->user();
+        
+        if ($user->role === 'admin') {
+            return redirect()->route('admin.index');
+        } elseif ($user->role === 'apoteker') {
+            return redirect()->route('manajemen.index');
+        } else {
+            return redirect()->route('pengguna.index');
+        }
+    }
+    
+    return redirect()->route('login');
+});

@@ -131,8 +131,9 @@ class PenjualanController extends Controller
     public function simpanDariKeranjang(Request $request)
     {
         $metode = $request->input('metode_pembayaran');
+        $uangDiterima = intval($request->input('uang_diterima', 0));
         
-        $userId = 1; // ganti sesuai autentikasi
+        $userId = auth()->id(); // Use authenticated user ID instead of hardcoded 1
         $keranjangItems = Keranjang::where('user_id', $userId)->get();
     
         if ($keranjangItems->isEmpty()) {
@@ -142,20 +143,27 @@ class PenjualanController extends Controller
         $totalTransaksi = 0;
         $penjualans = [];
     
+        // Validate cash payment
+        if ($metode === 'Cash' && $uangDiterima <= 0) {
+            return redirect()->back()->with('error', 'Uang diterima harus diisi untuk pembayaran cash.');
+        }
+    
         foreach ($keranjangItems as $item) {
+            $kembalian = 0;
+            if ($metode === 'Cash') {
+                $kembalian = $uangDiterima - $item->total_harga;
+            }
+            
             $penjualan = Penjualan::create([
                 'produk_id'          => $item->produk_id,
                 'jumlah'             => $item->jumlah,
                 'harga'              => $item->harga_satuan,
                 'total_harga'        => $item->total_harga,
                 'metode_pembayaran'  => $metode,
-                'uang_diterima'      => 0,
-                'kembalian'          => 0,
+                'uang_diterima'      => $metode === 'Cash' ? $uangDiterima : null,
+                'kembalian'          => $kembalian,
                 'tanggal'            => now(),
-                'payment_status' => $metode === 'Cash' ? 'paid' : 'pending',
-
-
-                
+                'payment_status'     => $metode === 'Cash' ? 'paid' : 'pending',
             ]);
     
             $penjualans[] = $penjualan;
