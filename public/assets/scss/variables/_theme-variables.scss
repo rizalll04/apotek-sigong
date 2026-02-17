@@ -15,7 +15,8 @@ $header-shadow: 1px 0px 20px 0px rgb(0 0 0 / 12%);
 // Sidebar
 // ---------------------------------------------- 
 $custom-gray : #7C8FAC;
-$sidebar-text: $dark;
+// Sidebar (light card style)
+$sidebar-text: $dark; // dark text for a light sidebar
 
 $sidebar-link-padding: 12px 15px;
 $sidebar-icon-size: 23px;
@@ -26,8 +27,22 @@ $sidebar-first-level-icon-size: 14px;
 $sidebar-width-full: 270px;
 $sidebar-width-iconbar: 180px;
 $sidebar-width-mini: 87px; 
-$sidebar-spacing-x: 0 16px;
-$link-disabled: 0.38;
+$sidebar-spacing-x: 8px 12px;
+$link-disabled: 0.5;
+
+// Sidebar background (light card-style)
+$sidebar-bg: #f4f6f8; // light gray background
+$sidebar-bg-start: #f6f8fa;
+$sidebar-bg-end: #eef2f5;
+$sidebar-gradient: linear-gradient(180deg, $sidebar-bg-start 0%, $sidebar-bg-end 100%);
+$sidebar-link-color: $dark; // dark text
+$sidebar-link-muted: $muted; // muted text for helpers
+$sidebar-icon-bg: transparent; // icons sit on the white card
+$sidebar-active-bg: #0fa3a6; // teal active
+$sidebar-active-text: #ffffff;
+$sidebar-icon-accent: #0fa3a6; // icon accent color
+$sidebar-hover-bg: $white; // hover keeps card white but show subtle shadow
+$sidebar-shadow: 0 4px 12px rgba(15,23,36,0.06);
 
 $boxed-width: 1300px; // boxed layout width
 

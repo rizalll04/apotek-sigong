@@ -10,8 +10,12 @@
                     <!-- Header Struk -->
                     <div style="text-align: center;">
                         <h4 style="font-weight: bold;">STRUK PEMBAYARAN</h4>
-                        <p style="margin: 0;">Terima kasih telah berbelanja</p>
+                        <p style="margin: 0;">Terima kasih telah berbelanja Di Apotek Sigong</p>
                         <p style="margin: 0;">Tanggal: {{ now()->format('d M Y') }}</p>
+                    </div>
+                    <!-- Nama Kasir -->
+                    <div style="margin-top: 10px; font-size: 14px; text-align: center;">
+                        <p>Kasir: {{ Auth::user()->name }}</p> <!-- Menampilkan nama kasir sesuai yang login -->
                     </div>
 
                     <!-- Detail Pembayaran -->
@@ -26,7 +30,7 @@
                             <tbody>
                                 @foreach ($penjualans as $penjualan)
                                     <tr>
-                                        <td>{{ $penjualan->produk->nama_produk }}</td>
+                                        <td>{{ $penjualan->produk->nama }}</td>
                                         <td style="text-align: right;">Rp {{ number_format($penjualan->total_harga, 2) }}</td>
                                     </tr>
                                 @endforeach
@@ -45,8 +49,9 @@
                         <p id="countdown-message">Session akan kedaluwarsa dalam <span id="countdown">02:00</span> menit.</p>
                     </div>
 
-                    <!-- Tombol Cetak -->
-                    <div style="text-align: center; margin-top: 20px;">
+                  
+                     <!-- Tombol Cetak -->
+                     <div style="text-align: center; margin-top: 20px;">
                         <button onclick="window.print()" class="btn btn-primary btn-sm">Cetak Struk</button>
                     </div>
 
@@ -63,7 +68,6 @@
     </div>
 </div>
 
-<!-- Script untuk Hitung Mundur Session -->
 <script>
     let countdownTime = 120; // Waktu countdown dalam detik (2 menit)
     
@@ -85,7 +89,18 @@
 
     // Update countdown setiap detik
     const countdownInterval = setInterval(updateCountdown, 1000);
-
 </script>
+<style>
+    /* Hanya menampilkan struk saat pencetakan */
+    @media print {
+        .btn {
+            display: none; /* Menyembunyikan tombol */
+        }
+
+        #session-timer {
+            display: none; /* Menyembunyikan pemberitahuan session */
+        }
+    }
+</style>
 
 @endsection

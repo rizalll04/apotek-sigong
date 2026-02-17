@@ -7,56 +7,132 @@ use App\Models\Keranjang;
 use App\Models\Penjualan;
 use App\Models\Produk;  
 
+use Carbon\Carbon;
+use App\Imports\PenjualanImport;
+use Maatwebsite\Excel\Facades\Excel;
+use Illuminate\Support\Facades\Log;
+use Midtrans\Config;
+use Midtrans\Snap;
+
+
 class PenjualanController extends Controller
 {
+
+
+
+    public function showImport()
+    {
+        $penjualan = Penjualan::latest()->paginate(10);
+        return view('penjualan.import', compact('penjualan'));
+    }
+
+    /**
+     * Meng-handle proses import dari file Excel
+     */
+    public function import(Request $request)
+    {
+        $request->validate([
+            'file' => 'required|mimes:xlsx,csv',
+        ]);
+
+        Excel::import(new PenjualanImport, $request->file('file'));
+
+        return redirect()->route('penjualan.index')->with('success', 'Data penjualan berhasil diimport!');
+    }
     public function laporan(Request $request)
     {
-        // Filter tahun
-        $tahun = $request->get('tahun', now()->year); // Default tahun saat ini
+        $filter = $request->get('filter', 'bulanan'); // Default: bulanan
+        $tahun = $request->get('tahun', now()->year);
+        $bulan = $request->get('bulan', now()->month);
+        $tanggal = $request->get('tanggal', now()->toDateString());
+        $minggu = $request->get('minggu', null); // Minggu ke-
     
-        // Ambil data penjualan berdasarkan tahun
-        $penjualan = Penjualan::with('produk')
-            ->whereYear('created_at', $tahun)
-            ->get();
+        $penjualan = Penjualan::with('produk');
     
-        // Hitung total penjualan dan jumlah produk
+        if ($filter == 'harian') {
+            $penjualan = $penjualan->whereDate('tanggal', $tanggal);
+        } elseif ($filter == 'mingguan') {
+            if ($minggu !== null) {
+                // Hitung range minggu
+                $startOfWeek = now()->setISODate($tahun, $minggu)->startOfWeek();
+                $endOfWeek = now()->setISODate($tahun, $minggu)->endOfWeek();
+                $penjualan = $penjualan->whereBetween('tanggal', [$startOfWeek, $endOfWeek]);
+            }
+        } elseif ($filter == 'bulanan') {
+            $penjualan = $penjualan->whereYear('tanggal', $tahun)
+                                   ->whereMonth('tanggal', $bulan);
+        } elseif ($filter == 'tahunan') {
+            $penjualan = $penjualan->whereYear('tanggal', $tahun);
+        }
+    
+        $penjualan = $penjualan->get();
+    
         $totalPenjualan = $penjualan->sum('total_harga');
         $totalJumlahProduk = $penjualan->sum('jumlah');
     
-        // Format angka
         $formattedTotalPenjualan = number_format($totalPenjualan, 2, ',', '.');
         $formattedTotalJumlahProduk = number_format($totalJumlahProduk, 0, ',', '.');
     
-        // Kirim data ke view
         return view('penjualan.laporan', compact(
-            'penjualan', 
-            'formattedTotalPenjualan', 
-            'formattedTotalJumlahProduk', 
-            'tahun'
+            'penjualan',
+            'formattedTotalPenjualan',
+            'formattedTotalJumlahProduk',
+            'filter',
+            'tahun',
+            'bulan',
+            'tanggal',
+            'minggu'
         ));
     }
     
-
     
 
-
-    public function index()
+    public function index(Request $request)
     {
-        // Ambil data penjualan dari database
-        $penjualan = Penjualan::with('produk')->latest()->get();
-
-        // Tampilkan view dengan data penjualan
-        return view('penjualan.index', compact('penjualan'));
+        // Ambil input bulan dan tahun dari request
+        $bulan = $request->bulan;
+        $tahun = $request->tahun;
+        
+        // Query dasar untuk mendapatkan data penjualan
+        $penjualanQuery = Penjualan::with('produk')->latest();
+        
+        // Filter berdasarkan bulan jika ada
+        if ($bulan) {
+            $penjualanQuery->whereMonth('tanggal', $bulan);
+        }
+        
+        // Filter berdasarkan tahun jika ada
+        if ($tahun) {
+            $penjualanQuery->whereYear('tanggal', $tahun);
+        }
+        
+        // Ambil data penjualan yang sudah difilter
+        $penjualan = $penjualanQuery->get();
+        
+        // Ambil bulan dan tahun yang unik dari data penjualan
+        $months = $penjualan->groupBy(function($date) {
+            return \Carbon\Carbon::parse($date->tanggal)->format('m'); // Ambil bulan
+        });
+    
+        $years = $penjualan->groupBy(function($date) {
+            return \Carbon\Carbon::parse($date->tanggal)->format('Y'); // Ambil tahun
+        });
+    
+        // Tampilkan view dengan data penjualan dan filter bulan/tahun
+        return view('penjualan.index', compact('penjualan', 'months', 'years'));
     }
+    
+
     /**
      * Simpan data dari keranjang ke tabel penjualan.
      *
      * @return \Illuminate\Http\RedirectResponse
      */
-    public function simpanDariKeranjang()
+    public function simpanDariKeranjang(Request $request)
     {
-        // Ambil data keranjang untuk user tertentu
-        $userId = 1; // Ganti dengan autentikasi pengguna jika diperlukan
+        $metode = $request->input('metode_pembayaran');
+        
+        $userId = 1; // ganti sesuai autentikasi
         $keranjangItems = Keranjang::where('user_id', $userId)->get();
     
         if ($keranjangItems->isEmpty()) {
@@ -67,23 +143,25 @@ class PenjualanController extends Controller
         $penjualans = [];
     
         foreach ($keranjangItems as $item) {
-            // Simpan data dari keranjang ke tabel penjualan
             $penjualan = Penjualan::create([
-                'produk_id'   => $item->produk_id,
-                'jumlah'      => $item->jumlah,
-                'harga'       => $item->harga_satuan,
-                'total_harga' => $item->total_harga,
-                'uang_diterima' => 0, // Diisi setelah pembayaran
-                'kembalian'   => 0, // Diisi setelah pembayaran
+                'produk_id'          => $item->produk_id,
+                'jumlah'             => $item->jumlah,
+                'harga'              => $item->harga_satuan,
+                'total_harga'        => $item->total_harga,
+                'metode_pembayaran'  => $metode,
+                'uang_diterima'      => 0,
+                'kembalian'          => 0,
+                'tanggal'            => now(),
+                'payment_status' => $metode === 'Cash' ? 'paid' : 'pending',
+
+
+                
             ]);
     
-            // Masukkan ke dalam array penjualan untuk ditampilkan
             $penjualans[] = $penjualan;
-    
-            // Hitung total transaksi
             $totalTransaksi += $item->total_harga;
     
-            // Kurangi stok produk yang terjual
+            // Kurangi stok
             $produk = Produk::find($item->produk_id);
             if ($produk) {
                 $produk->stok -= $item->jumlah;
@@ -91,17 +169,88 @@ class PenjualanController extends Controller
             }
         }
     
-        // Hapus semua item di keranjang setelah data dipindahkan
+        // Bersihkan keranjang
         Keranjang::where('user_id', $userId)->delete();
     
-        // Kirim data penjualan dan total transaksi untuk ditampilkan di modal
-        return redirect()->route('penjualan.struk')
-                         ->with('penjualans', $penjualans)
-                         ->with('totalTransaksi', $totalTransaksi)
-                         ->with('success', 'Transaksi berhasil disimpan.');
+        // Redirect sesuai metode pembayaran
+        if ($metode === 'Non Tunai') {
+            return redirect()->route('penjualan.pembayaran') // ganti route sesuai halaman pembayaran kamu
+                             ->with('penjualans', $penjualans)
+                             ->with('totalTransaksi', $totalTransaksi)
+                             ->with('info', 'Silakan lanjutkan pembayaran Non Tunai.');
+        } else {
+            return redirect()->route('penjualan.struk')
+                             ->with('penjualans', $penjualans)
+                             ->with('totalTransaksi', $totalTransaksi)
+                             ->with('success', 'Transaksi berhasil disimpan.');
+        }
+    }
+
+
+    public function halamanPembayaranNonTunai()
+    {
+        // Ambil semua data penjualan dengan status pending
+        $penjualans = Penjualan::where('payment_status', 'pending')->get();
+    
+        // Hitung total transaksi dari yang pending saja
+        $totalTransaksi = $penjualans->sum('total_harga');
+    
+        return view('penjualan.pembayaran', compact('penjualans', 'totalTransaksi'));
     }
     
     
+
+
+    public function edit($id_penjualan)
+    {
+        $penjualan = Penjualan::findOrFail($id_penjualan);
+    
+        // Pastikan tanggal diubah menjadi objek Carbon jika belum
+        $penjualan->tanggal = Carbon::parse($penjualan->tanggal);
+    
+        $produk = Produk::all(); // Ambil data produk yang tersedia
+        return view('penjualan.edit', compact('penjualan', 'produk'));
+    }
+    
+
+    public function update(Request $request, $id_penjualan)
+    {
+        // Validasi input
+        $request->validate([
+            'produk_id' => 'required|exists:produk,id',
+            'jumlah' => 'required|numeric',
+            'harga' => 'required|numeric',
+            'tanggal' => 'required|date', // Menambahkan validasi tanggal
+        ]);
+    
+        // Cari data penjualan berdasarkan id_penjualan
+        $penjualan = Penjualan::findOrFail($id_penjualan);
+    
+        // Update data penjualan
+        $penjualan->produk_id = $request->produk_id;
+        $penjualan->jumlah = $request->jumlah;
+        $penjualan->harga = $request->harga;
+        $penjualan->total_harga = $request->jumlah * $request->harga;
+    
+        // Memperbarui tanggal penjualan sesuai dengan request, pastikan formatnya benar
+        $penjualan->tanggal = Carbon::parse($request->tanggal); // Menggunakan Carbon untuk mengonversi tanggal
+    
+        // Simpan perubahan
+        $penjualan->save();
+    
+        // Redirect ke halaman penjualan dengan pesan sukses
+        return redirect()->route('penjualan.index')->with('success', 'Penjualan berhasil diperbarui.');
+    }
+    
+    
+
+    public function destroy($id_penjualan)
+    {
+        $penjualan = Penjualan::findOrFail($id_penjualan);  // Menggunakan id_penjualan
+        $penjualan->delete();
+        return redirect()->route('penjualan.index')->with('success', 'Data penjualan berhasil dihapus.');
+    }
+
     public function struk()
     {
         // Mengambil waktu session sebelumnya
@@ -124,6 +273,130 @@ class PenjualanController extends Controller
     
         return view('penjualan.struk', compact('penjualans', 'totalTransaksi'));
     }
+
+
+    public function deleteAll()
+{
+    // Menghapus semua data penjualan
+    Penjualan::truncate();
+
+    // Redirect dengan pesan sukses
+    return redirect()->route('penjualan.index')->with('success', 'Semua transaksi telah dihapus.');
+}
+
+
+
+
+
+
+// // Pembayaran Midtrans
+
+// public function processPayment($id)
+//     {
+//         $order = Order::findOrFail($id);
     
+//         // Update order status
+//         // $order->update(['payment_status' => 'pending']);
     
+//         // Buat Order ID unik untuk Midtrans
+//         $midtrans_order_id = 'ORDER-' . $order->id . '-' . time();
+//         $order->update(['midtrans_order_id' => $midtrans_order_id]);
+    
+//         // Konfigurasi Midtrans
+//         Config::$serverKey = config('services.midtrans.server_key');
+//         Config::$isProduction = false;
+//         Config::$isSanitized = true;
+//         Config::$is3ds = true;
+    
+//         // Data pelanggan dari order
+//         $customer_details = [
+//             'first_name' => $order->customer_name,
+//             'email' => $order->customer_email,
+//             'phone' => $order->customer_phone ?? '081234567890',
+//         ];
+    
+//         // Detail item
+//         $item_details = [
+//             [
+//                 'id' => $order->product->id,
+//                 'price' => (int) number_format($order->product->price, 0, '', ''),
+//                 'quantity' => $order->quantity,
+//                 'name' => $order->product->name,
+//             ]
+//         ];
+    
+//         // Data transaksi
+//         $transaction = [
+//             'transaction_details' => [
+//                 'order_id' => $midtrans_order_id,
+//                 'gross_amount' => (int) number_format($order->total_price, 0, '', ''),
+//             ],
+//             'customer_details' => $customer_details,
+//             'item_details' => $item_details,
+//             'callbacks' => [
+//                 'finish' => route('orders.finish', ['id' => $order->id]),  // Pastikan menggunakan ID yang benar
+//             ],
+//         ];
+    
+//         try {
+//             $snapTransaction = Snap::createTransaction($transaction);
+//             // Redirect ke Midtrans untuk menyelesaikan pembayaran
+//             return redirect()->away($snapTransaction->redirect_url);
+//         } catch (\Exception $e) {
+//             Log::error('Midtrans Payment Error: ' . $e->getMessage());
+//             return redirect()->route('orders.index')->with('error', 'Gagal memproses pembayaran. Silakan coba lagi.');
+//         }
+//     }
+    
+    // public function finish($id)
+    // {
+    //     // Mengambil order berdasarkan id
+    //     $order = Order::findOrFail($id);
+        
+    //     // Cek status pembayaran yang diterima
+    //     $transaction_status = request()->get('transaction_status');
+    //     Log::info('Transaction Status: ' . $transaction_status);  // Memastikan status yang diterima
+        
+    //     // Periksa jika transaction_status ada
+    //     if (!$transaction_status) {
+    //         Log::error('Status transaksi tidak ditemukan untuk order ID: ' . $id);
+    //         return redirect()->route('orders.index')->with('error', 'Status transaksi tidak ditemukan.');
+    //     }
+    
+    //     // Update status pembayaran berdasarkan transaction_status
+    //     try {
+    //         switch ($transaction_status) {
+    //             case 'settlement':
+    //                 $order->payment_status = 'paid';
+    //                 break;
+    
+    //             case 'pending':
+    //                 $order->payment_status = 'pending';
+    //                 break;
+    
+    //             case 'failed':
+    //                 $order->payment_status = 'failed';
+    //                 break;
+    
+    //             default:
+    //                 $order->payment_status = 'cancelled';
+    //                 break;
+    //         }
+    
+    //         // Simpan perubahan status pembayaran
+    //         if (!$order->save()) {
+    //             Log::error('Gagal memperbarui status pembayaran untuk order ID: ' . $id);
+    //             return redirect()->route('orders.index')->with('error', 'Gagal memperbarui status pembayaran.');
+    //         }
+    
+    //         // Jika berhasil memperbarui
+    //         Log::info('Status pembayaran berhasil diperbarui untuk order ID: ' . $id);
+    //         return redirect()->route('orders.index')->with('success', 'Pembayaran diproses dengan status: ' . $transaction_status);
+    
+    //     } catch (\Exception $e) {
+    //         Log::error('Error saat memperbarui status pembayaran untuk order ID: ' . $id . ' - ' . $e->getMessage());
+    //         return redirect()->route('orders.index')->with('error', 'Terjadi kesalahan saat memperbarui status pembayaran.');
+    //     }
+    // }
+
 }

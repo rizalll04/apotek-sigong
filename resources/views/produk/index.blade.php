@@ -1,188 +1,217 @@
-@extends('app')
+@extends('app') <!-- Sesuaikan dengan layout Anda -->
 
 @section('content')
 <div class="container-fluid">
-<div class="container mt-4">
-    <h1 class="text-center">Manajemen Produk</h1>
-    <button class="btn btn-primary mb-3" data-bs-toggle="modal" data-bs-target="#modalProduk">Tambah Produk</button>
-    <table class="table table-bordered">
+    <h1 class="mb-4">Daftar Produk</h1>
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div class="d-flex">
+            @if(Auth::check() && (Auth::user()->role == 'admin'))
+                <!-- Tombol Tambah Produk -->
+                <div class="me-3">
+                    <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#createModal">Tambah Produk</button>
+                </div>
+            @endif
+        
+            <!-- Form Import Excel -->
+            <div class="d-flex align-items-center">
+                <form action="{{ route('produk.import') }}" method="POST" enctype="multipart/form-data" class="d-flex align-items-center">
+                    @csrf
+                    <div class="mb-0 d-flex align-items-center me-3">
+                        <input type="file" name="file" class="form-control form-control-sm" required accept=".xlsx, .xls, .csv">
+                    </div>
+                    <button type="submit" class="btn btn-warning btn-sm">Import Data</button>
+                </form>
+            </div>
+        </div>
+        
+    
+        <!-- Form Pencarian -->
+        <form method="GET" action="{{ route('produk.index') }}" class="d-flex">
+            <div class="input-group">
+                <input type="text" class="form-control form-control-sm" name="search" value="{{ $search ?? '' }}" placeholder="Cari produk...">
+                <button class="btn btn-primary btn-sm" type="submit">Cari</button>
+            </div>
+        </form>
+        <div>  
+            <button type="button" class="btn btn-danger btn-sm" data-bs-toggle="modal" data-bs-target="#confirmDeleteAllModal">Hapus Semua</button>
+    </div>
+    </div>
+    
+    
+    <!-- Alert -->
+    @if (session('success'))
+    <div class="alert alert-success">{{ session('success') }}</div>
+    @endif
+
+    <div class="table-responsive">
+        <table class="table table-bordered table-striped">
         <thead>
             <tr>
-                <th>Kode</th>
+                <th>#</th>
                 <th>Nama</th>
-                <th>Satuan</th>
-                <th>Kategori</th>
                 <th>Stok</th>
-                <th>HPP</th>
+                <th>Harga Beli</th>
                 <th>Harga Jual</th>
-                <th>Gambar</th>
+                <th>Kategori</th>
+            
+                <th>Tanggal Kadaluarsa</th>
                 <th>Aksi</th>
             </tr>
         </thead>
         <tbody>
             @foreach ($produk as $item)
             <tr>
-                <td>{{ $item->kode_produk }}</td>
-                <td>{{ $item->nama_produk }}</td>
-                <td>{{ $item->satuan }}</td>
-                <td>{{ $item->kategori->nama ?? '-' }}</td>
+                <td>{{ $loop->iteration }}</td>
+                <td>{{ $item->nama }}</td>
                 <td>{{ $item->stok }}</td>
-                <td>{{ $item->hpp }}</td>
-                <td>{{ $item->harga_jual }}</td>
+                <td>{{ 'Rp ' . number_format($item->harga_beli, 0, ',', '.') }}</td>
+                <td>{{ 'Rp ' . number_format($item->harga_jual, 0, ',', '.') }}</td>
+                <td>{{ $item->kategori }}</td>
+             
+                <td>{{ $item->tanggal_kadaluarsa }}</td>
                 <td>
-                    @if($item->gambar)
-                    <img src="{{ asset('storage/' . $item->gambar) }}" alt="Gambar" width="50">
-                    @else
-                    Tidak ada
-                    @endif
-                </td>
-                <td>
-                    <button class="btn btn-warning btn-sm" data-bs-toggle="modal" data-bs-target="#modalEditProduk{{ $item->id_produk }}">Edit</button>
-                    <form action="{{ route('produk.destroy', $item->id_produk) }}" method="POST" style="display:inline-block;">
+                    <button class="btn btn-warning btn-sm" data-bs-toggle="modal" data-bs-target="#editModal{{ $item->id }}">Edit</button>
+                    <form action="{{ route('produk.destroy', $item->id) }}" method="POST" class="d-inline">
                         @csrf
                         @method('DELETE')
-                        <button class="btn btn-danger btn-sm">Hapus</button>
+                        <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Yakin ingin menghapus?')">Hapus</button>
                     </form>
                 </td>
             </tr>
 
-              <!-- Modal Edit Produk -->
-              <div class="modal fade" id="modalEditProduk{{ $item->id_produk }}" tabindex="-1" aria-hidden="true">
+
+
+            <!-- Modal Edit -->
+            <div class="modal fade" id="editModal{{ $item->id }}" tabindex="-1" aria-labelledby="editModalLabel" aria-hidden="true">
                 <div class="modal-dialog">
-                    <div class="modal-content">
-                        <form action="{{ route('produk.update', $item->id_produk) }}" method="POST" enctype="multipart/form-data">
-                            @csrf
-                            @method('PUT')
+                    <form action="{{ route('produk.update', $item->id) }}" method="POST">
+                        @csrf
+                        @method('PUT')
+                        <div class="modal-content">
                             <div class="modal-header">
-                                <h5 class="modal-title">Edit Produk</h5>
+                                <h5 class="modal-title" id="editModalLabel">Edit Produk</h5>
                                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                             </div>
                             <div class="modal-body">
-                                <!-- Kode Produk -->
                                 <div class="mb-3">
-                                    <label>Kode Produk</label>
-                                    <input type="text" name="kode_produk" class="form-control" value="{{ $item->kode_produk }}" required>
+                                    <label for="nama" class="form-label">Nama</label>
+                                    <input type="text" class="form-control" name="nama" value="{{ $item->nama }}" required>
                                 </div>
-
-                                <!-- Nama Produk -->
                                 <div class="mb-3">
-                                    <label>Nama Produk</label>
-                                    <input type="text" name="nama_produk" class="form-control" value="{{ $item->nama_produk }}" required>
+                                    <label for="stok" class="form-label">Stok</label>
+                                    <input type="number" class="form-control" name="stok" value="{{ $item->stok }}" required>
                                 </div>
-
-                                <!-- Satuan -->
                                 <div class="mb-3">
-                                    <label>Satuan</label>
-                                    <input type="text" name="satuan" class="form-control" value="{{ $item->satuan }}" required>
+                                    <label for="harga_beli" class="form-label">Harga Beli</label>
+                                    <input type="number" class="form-control" name="harga_beli" value="{{ $item->harga_beli }}" required>
                                 </div>
-
-                                <!-- Kategori -->
                                 <div class="mb-3">
-                                    <label>Kategori</label>
-                                    <select name="kategori_produk" class="form-control" required>
-                                        <option value="">-- Pilih Kategori --</option>
-                                        @foreach ($kategori as $kat)
-                                        <option value="{{ $kat->id_kategori }}" @if($kat->id_kategori == $item->kategori_produk) selected @endif>{{ $kat->nama }}</option>
-                                        @endforeach
-                                    </select>
+                                    <label for="harga_jual" class="form-label">Harga Jual</label>
+                                    <input type="number" class="form-control" name="harga_jual" value="{{ $item->harga_jual }}" required>
                                 </div>
-
-                                <!-- Stok -->
                                 <div class="mb-3">
-                                    <label>Stok</label>
-                                    <input type="number" name="stok" class="form-control" value="{{ $item->stok }}" required>
+                                    <label for="kategori" class="form-label">Kategori</label>
+                                    <input type="text" class="form-control" name="kategori" value="{{ $item->kategori }}" required>
                                 </div>
-
-                                <!-- HPP -->
                                 <div class="mb-3">
-                                    <label>HPP</label>
-                                    <input type="number" step="0.01" name="hpp" class="form-control" value="{{ $item->hpp }}" required>
+                                    <label for="keterangan" class="form-label">Keterangan</label>
+                                    <textarea class="form-control" name="keterangan" rows="3">{{ $item->keterangan }}</textarea>
                                 </div>
-
-                                <!-- Harga Jual -->
                                 <div class="mb-3">
-                                    <label>Harga Jual</label>
-                                    <input type="number" step="0.01" name="harga_jual" class="form-control" value="{{ $item->harga_jual }}" required>
-                                </div>
-
-                                <!-- Gambar -->
-                                <div class="mb-3">
-                                    <label>Gambar</label>
-                                    <input type="file" name="gambar" class="form-control">
-                                    @if($item->gambar)
-                                    <img src="{{ asset('storage/' . $item->gambar) }}" alt="Gambar" width="100" class="mt-2">
-                                    @endif
+                                    <label for="tanggal_kadaluarsa" class="form-label">Tanggal Kadaluarsa</label>
+                                    <input type="date" class="form-control" name="tanggal_kadaluarsa" value="{{ $item->tanggal_kadaluarsa }}">
                                 </div>
                             </div>
                             <div class="modal-footer">
-                                <button type="submit" class="btn btn-success">Simpan</button>
-                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
+                                <button type="submit" class="btn btn-primary">Simpan</button>
                             </div>
-                        </form>
-                    </div>
+                        </div>
+                    </form>
                 </div>
             </div>
             @endforeach
         </tbody>
     </table>
 </div>
-<!-- Modal Tambah -->
-<div class="modal fade" id="modalProduk" tabindex="-1" aria-hidden="true">
+
+
+
+
+
+</div>
+   
+
+
+
+ <!-- Modal Konfirmasi Hapus Semua -->
+ <div class="modal fade" id="confirmDeleteAllModal" tabindex="-1" aria-labelledby="confirmDeleteAllModalLabel" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
-            <form action="{{ route('produk.store') }}" method="POST" enctype="multipart/form-data">
-                @csrf
+            <div class="modal-header">
+                <h5 class="modal-title" id="confirmDeleteAllModalLabel">Konfirmasi Hapus Semua</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                Apakah Anda yakin ingin menghapus semua produk? Tindakan ini tidak bisa dibatalkan.
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
+                <form action="{{ route('produk.deleteAll') }}" method="POST">
+                    @csrf
+                    <button type="submit" class="btn btn-danger">Hapus Semua</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Tambah -->
+<div class="modal fade" id="createModal" tabindex="-1" aria-labelledby="createModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <form action="{{ route('produk.store') }}" method="POST">
+            @csrf
+            <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title">Tambah Produk</h5>
+                    <h5 class="modal-title" id="createModalLabel">Tambah Produk</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
                     <div class="mb-3">
-                        <label>Kode Produk</label>
-                        <input type="text" name="kode_produk" class="form-control" required>
+                        <label for="nama" class="form-label">Nama</label>
+                        <input type="text" class="form-control" name="nama" required>
                     </div>
                     <div class="mb-3">
-                        <label>Nama Produk</label>
-                        <input type="text" name="nama_produk" class="form-control" required>
+                        <label for="stok" class="form-label">Stok</label>
+                        <input type="number" class="form-control" name="stok" required>
                     </div>
                     <div class="mb-3">
-                        <label>Satuan</label>
-                        <input type="text" name="satuan" class="form-control" required>
+                        <label for="harga_beli" class="form-label">Harga Beli</label>
+                        <input type="number" class="form-control" name="harga_beli" required>
                     </div>
                     <div class="mb-3">
-                        <label>Kategori</label>
-                        <select name="kategori_produk" class="form-control" required>
-                            <option value="">-- Pilih Kategori --</option>
-                            @foreach ($kategori as $kat)
-                            <option value="{{ $kat->id_kategori }}">{{ $kat->nama }}</option>
-                            @endforeach
-                        </select>
+                        <label for="harga_jual" class="form-label">Harga Jual</label>
+                        <input type="number" class="form-control" name="harga_jual" required>
                     </div>
                     <div class="mb-3">
-                        <label>Stok</label>
-                        <input type="number" name="stok" class="form-control" required>
+                        <label for="kategori" class="form-label">Kategori</label>
+                        <input type="text" class="form-control" name="kategori" required>
                     </div>
                     <div class="mb-3">
-                        <label>HPP</label>
-                        <input type="number" step="0.01" name="hpp" class="form-control" required>
+                        <label for="keterangan" class="form-label">Keterangan</label>
+                        <textarea class="form-control" name="keterangan" rows="3"></textarea>
                     </div>
                     <div class="mb-3">
-                        <label>Harga Jual</label>
-                        <input type="number" step="0.01" name="harga_jual" class="form-control" required>
-                    </div>
-                    <div class="mb-3">
-                        <label>Gambar</label>
-                        <input type="file" name="gambar" class="form-control">
+                        <label for="tanggal_kadaluarsa" class="form-label">Tanggal Kadaluarsa</label>
+                        <input type="date" class="form-control" name="tanggal_kadaluarsa">
                     </div>
                 </div>
                 <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
                     <button type="submit" class="btn btn-primary">Simpan</button>
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
                 </div>
-            </form>
-        </div>
+            </div>
+        </form>
     </div>
 </div>
-</div>
 @endsection
-

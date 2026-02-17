@@ -5,8 +5,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>Login - StraightRay</title>
+    <title>Login - Apotek Sigong</title>
     <link rel="stylesheet" href="../assets/css/styles.min.css">
+     <link rel="stylesheet" href="{{asset('assets/css/styles.min.css')}}">
+  <link rel="shortcut icon" type="image/png" href="{{ asset('public/images/apotek.png') }}" />
 </head>
 
 <body>
@@ -20,17 +22,19 @@
                             <div class="card-body">
                                 <a href="./index.html" class="text-nowrap logo-img text-center d-block py-3 w-100">
                                     <span style="font-size: 2rem; font-weight: bold; color: #007bff; text-transform: uppercase; text-decoration: none; letter-spacing: 2px; font-family: 'Arial', sans-serif;">
-                                        StraightRay.co
+                                        Apotek Sigong
                                     </span>
                                 </a>
 
                                 @if(session('success'))
                                 <p class="alert alert-success">{{ session('success') }}</p>
                                 @endif
+                                
+                                <!-- Menampilkan error jika ada username atau password yang salah -->
                                 @if($errors->any())
-                                @foreach($errors->all() as $err)
-                                <p class="alert alert-danger">{{ $err }}</p>
-                                @endforeach
+                                    @foreach($errors->all() as $err)
+                                    <p class="alert alert-danger">{{ $err }}</p>
+                                    @endforeach
                                 @endif
 
                                 <p class="text-center">Your Social Campaigns</p>
@@ -44,18 +48,12 @@
                                         <label for="password" class="form-label">Password <span class="text-danger">*</span></label>
                                         <input class="form-control" type="password" name="password" id="password" required>
                                     </div>
-                                    {{-- <div class="mb-3 form-check">
-                                        <input class="form-check-input" type="checkbox" name="is_admin" value="1" id="is_admin">
-                                        <label class="form-check-label" for="is_admin">
-                                            Login as Admin
-                                        </label>
-                                    </div> --}}
                                     <div class="mb-3">
                                         <button class="btn btn-primary w-100 py-8 fs-4 mb-4">Login</button>
                                     </div>
                                 </form>
                                 <div class="d-flex align-items-center justify-content-center">
-                                    <p class="fs-4 mb-0 fw-bold">New to StraightRay?</p>
+                                    <p class="fs-4 mb-0 fw-bold">New to Apotek Sigong?</p>
                                     <a class="text-primary fw-bold ms-2" href="{{route('register')}}">Create an account</a>
                                 </div>
                             </div>

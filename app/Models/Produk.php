@@ -9,27 +9,26 @@ class Produk extends Model
 {
     use HasFactory;
 
-    protected $table = 'produk';
-
-    protected $primaryKey = 'id_produk';
+    protected $table = 'produk'; // Nama tabel produk
+    protected $primaryKey = 'id'; // Primary key
 
     protected $fillable = [
-        'kode_produk',
-        'nama_produk',
-        'satuan',
-        'kategori_produk',
+        'nama',
         'stok',
-        'hpp',
+        'harga_beli',
         'harga_jual',
+        'kategori',
         'keterangan',
-        'gambar',
+        'tanggal_kadaluarsa', // Kolom baru
     ];
 
-    /**
-     * Relasi ke model Kategori
-     */
-    public function kategori()
+    public function penjualan()
     {
-        return $this->belongsTo(Kategori::class, 'kategori_produk', 'id_kategori');
+        return $this->hasMany(Penjualan::class, 'produk_id'); // 'produk_id' disesuaikan dengan nama kolom yang ada di tabel penjualan
+    }
+
+    public function forecastParameter()
+    {
+        return $this->hasOne(ForecastParameter::class, 'product_id', 'id');
     }
 }

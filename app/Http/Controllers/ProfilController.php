@@ -43,20 +43,20 @@ class ProfilController extends Controller
         return view('profil.show', compact('profil'))->with('success', 'Profil berhasil disimpan!');
     }
 
-    // Menampilkan profil berdasarkan user_id
-    public function show($id)
+    public function show()
     {
-        // Cari profil berdasarkan user_id
-        $profil = Profil::where('user_id', $id)->first();
-
+        // Mengambil profil pengguna yang sedang login
+        $profil = Profil::where('user_id', auth()->id())->first();
+    
         // Jika profil tidak ditemukan, tampilkan halaman create
         if (!$profil) {
-            return view('profil.create')->with('error', 'Profil tidak ditemukan!'); 
+            return view('profil.create')->with('error', 'Profil tidak ditemukan!');
         }
-
+    
         // Tampilkan profil pada halaman show
         return view('profil.show', compact('profil'));
     }
+    
 
     // Menampilkan form untuk mengedit profil
     public function edit($id)

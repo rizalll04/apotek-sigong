@@ -28,6 +28,6 @@ class Keranjang extends Model
 
     public function produk()
     {
-        return $this->belongsTo(Produk::class, 'produk_id', 'id_produk');
+        return $this->belongsTo(Produk::class, 'produk_id', 'id');
     }
 }

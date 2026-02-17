@@ -1,0 +1,18 @@
+/* HEADER / TOPBAR PUTIH */
+.app-header {
+    background-color: #ffffff !important;
+}
+
+.app-header .navbar {
+    background-color: #ffffff !important;
+}
+
+/* Navbar collapse (kanan: profile, logout, dll) */
+.navbar-expand-lg .navbar-collapse {
+    background-color: #ffffff !important;
+}
+
+/* Garis pemisah halus (opsional, biar rapi) */
+.app-header {
+    border-bottom: 1px solid #e5e7eb;
+}

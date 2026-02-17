@@ -1,40 +1,47 @@
 @extends('app')
 
 @section('content')
-<div class="row">
-    <div class="col-md-6">
-        @if(session('success'))
-        <p class="alert alert-success">{{ session('success') }}</p>
-        @endif
+<div class="container-fluid" >
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body p-5">
+                    <div class="text-center mb-4">
+                        @if($profil->foto)
+                        <img src="{{ asset('storage/' . $profil->foto) }}" alt="Foto Profil" 
+                             class="rounded-circle shadow-sm" 
+                             style="width: 120px; height: 120px; object-fit: cover; border: 4px solid #f0f0f0;">
+                        @else
+                        <div class="rounded-circle shadow-sm d-inline-flex align-items-center justify-content-center" 
+                             style="width: 120px; height: 120px; background-color: #ddd; font-size: 20px; color: #555;">
+                            <i class="bi bi-person-fill"></i>
+                        </div>
+                        @endif
+                    </div>
 
-        <h3>Profil Pengguna</h3>
-        
-        <div class="mb-3">
-            <strong>Username:</strong> {{ Auth::user()->username }}
-        </div>
+                    <h2 class="text-center" style="font-size: 24px; font-weight: 700;">{{ Auth::user()->username }}</h2>
+                    <p class="text-center text-muted" style="font-size: 14px;">Pengguna Terdaftar</p>
 
-        <div class="mb-3">
-            <strong>Alamat:</strong> {{ $profil->alamat }}
-        </div>
+                    <hr style="border-top: 1px solid #eaeaea;">
 
-        <div class="mb-3">
-            <strong>Tanggal Lahir:</strong> {{ \Carbon\Carbon::parse($profil->tanggal_lahir)->format('d M Y') }}
-        </div>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <strong>Alamat:</strong>
+                            <p class="text-muted">{{ $profil->alamat }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <strong>Tanggal Lahir:</strong>
+                            <p class="text-muted">{{ \Carbon\Carbon::parse($profil->tanggal_lahir)->format('d M Y') }}</p>
+                        </div>
+                    </div>
 
-        @if($profil->foto)
-        <div class="mb-3">
-            <strong>Foto:</strong><br />
-            <img src="{{ asset('storage/' . $profil->foto) }}" alt="Foto Profil" class="img-fluid" width="200">
-        </div>
-        
-        @else
-        <div class="mb-3">
-            <strong>Foto:</strong> Tidak ada foto yang diunggah.
-        </div>
-        @endif
-
-        <div class="mb-3">
-            <a href="{{ route('profil.edit', Auth::id()) }}" class="btn btn-warning">Edit Profil</a>
+                    <div class="text-center mt-4">
+                        <a href="{{ route('profil.edit', Auth::id()) }}" class="btn btn-primary px-4 py-2" style="border-radius: 25px;">
+                            <i class="bi bi-pencil"></i> Edit Profil
+                        </a>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 </div>

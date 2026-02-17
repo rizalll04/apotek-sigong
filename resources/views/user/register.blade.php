@@ -4,7 +4,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Register - StraightRay</title>
+    <title>Register - Apotek Cigadung</title>
     <link rel="shortcut icon" type="image/png" href="../assets/images/logos/seodashlogo.png" />
     <link rel="stylesheet" href="../assets/css/styles.min.css" />
 </head>
@@ -20,7 +20,7 @@
                             <div class="card-body">
                                 <a href="./index.html" class="text-nowrap logo-img text-center d-block py-3 w-100">
                                     <span style="font-size: 2rem; font-weight: bold; color: #007bff; text-transform: uppercase; text-decoration: none; letter-spacing: 2px; font-family: 'Arial', sans-serif;">
-                                        StraightRay.co
+                                        Apotek Cigadung
                                     </span>
                                 </a>
                                 <p class="text-center">Create Your Account</p>
@@ -52,8 +52,9 @@
                                     <div class="mb-3">
                                         <label class="form-label">Role <span class="text-danger">*</span></label>
                                         <select class="form-control" name="role" required>
-                                            <option value="manajer" {{ old('role') == 'manajer' ? 'selected' : '' }}>Manajer</option>
+                                            <option value="owner" {{ old('role') == 'owner' ? 'owner' : '' }}>Owner</option>
                                             <option value="admin" {{ old('role') == 'admin' ? 'selected' : '' }}>Admin</option>
+                                            <option value="apoteker" {{ old('role') == 'apoteker' ? 'selected' : '' }}>Apoteker</option>
                                             <option value="kasir" {{ old('role') == 'kasir' ? 'selected' : '' }}>Kasir</option>
                                         </select>
                                     </div>
